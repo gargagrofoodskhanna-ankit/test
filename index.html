@@ -86,6 +86,10 @@
             <p class="text-sm opacity-80">Record and track grain purchases in real-time.</p>
         </div>
         <div class="p-6 md:p-8">
+            <!-- System Status Indicator -->
+            <div id="statusMessage" class="text-center p-2 rounded-lg mb-4 text-sm font-semibold text-gray-700 bg-gray-200">
+                Connecting to system...
+            </div>
             <!-- User Info Display -->
             <div class="bg-gray-100 rounded-lg p-3 text-center mb-6 shadow-inner">
                 <span class="text-xs font-semibold text-gray-600">Your User ID:</span>
@@ -247,6 +251,7 @@
 
         // DOM elements
         const userIdDisplay = document.getElementById('userIdDisplay');
+        const statusMessage = document.getElementById('statusMessage');
         const recordViewBtn = document.getElementById('recordViewBtn');
         const reportsViewBtn = document.getElementById('reportsViewBtn');
         const mainView = document.getElementById('mainView');
@@ -277,8 +282,13 @@
         function setupAuthAndListener() {
             if (!auth || !db) {
                 console.error("Firebase services are not initialized.");
+                statusMessage.textContent = "Error: System not initialized";
+                statusMessage.classList.remove('bg-gray-200');
+                statusMessage.classList.add('bg-red-200', 'text-red-800');
                 return;
             }
+
+            statusMessage.textContent = "Connecting to system...";
 
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (initialAuthToken) {
@@ -299,12 +309,18 @@
                     userIdDisplay.textContent = userId;
                     console.log("User is authenticated:", userId);
                     startRealtimeListeners();
+                    statusMessage.textContent = "System Ready";
+                    statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
+                    statusMessage.classList.add('bg-green-200', 'text-green-800');
                 } else {
                     userId = crypto.randomUUID();
                     userAuthReady = true;
                     userIdDisplay.textContent = userId;
                     console.log("User is not authenticated, using a temporary ID:", userId);
                     startRealtimeListeners();
+                    statusMessage.textContent = "System Ready (Temporary Session)";
+                    statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
+                    statusMessage.classList.add('bg-green-200', 'text-green-800');
                 }
             });
         }
