@@ -3,45 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Inventory Manager</title>
+    <title>Grain Procurement System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 90%;
+            max-width: 450px;
+        }
+        .dropdown-container {
+            position: relative;
+        }
+        .dropdown-list {
+            position: absolute;
+            z-index: 50;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            list-style: none;
+            padding: 0;
+            margin-top: 4px;
+        }
+        .dropdown-list li {
+            padding: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .dropdown-list li:hover {
             background-color: #f3f4f6;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-container, .print-container * {
+                visibility: visible;
+            }
+            .print-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+        .header-bg {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+        .shadow-custom {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05), 0 6px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 md:p-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-center mb-2 text-gray-800">Inventory Manager</h1>
-        <p class="text-center text-sm text-gray-500 mb-6">A simple, real-time inventory management tool.</p>
-
-        <!-- User Info Display -->
-        <div class="bg-gray-100 rounded-lg p-3 text-center mb-6">
-            <span class="text-xs font-semibold text-gray-600">Your User ID:</span>
-            <p id="userIdDisplay" class="text-sm font-mono text-gray-800 break-all mt-1"></p>
+    <div class="bg-white rounded-3xl shadow-custom w-full max-w-2xl">
+        <div class="header-bg text-white rounded-t-3xl p-6 md:p-8 text-center shadow-inner">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Grain Procurement System</h1>
+            <p class="text-sm opacity-80">Record and track grain purchases in real-time.</p>
         </div>
+        <div class="p-6 md:p-8">
+            <!-- User Info Display -->
+            <div class="bg-gray-100 rounded-lg p-3 text-center mb-6 shadow-inner">
+                <span class="text-xs font-semibold text-gray-600">Your User ID:</span>
+                <p id="userIdDisplay" class="text-sm font-mono text-gray-800 break-all mt-1"></p>
+            </div>
 
-        <!-- Add Item Form -->
-        <form id="addItemForm" class="flex flex-col md:flex-row gap-4 mb-6">
-            <input type="text" id="itemName" placeholder="Item Name" required
-                   class="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
-            <input type="number" id="itemQuantity" placeholder="Quantity" required
-                   class="w-full md:w-28 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
-            <button type="submit"
-                    class="w-full md:w-auto p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
-                Add Item
-            </button>
-        </form>
+            <!-- View Toggler -->
+            <div class="flex justify-center gap-4 mb-6">
+                <button id="recordViewBtn" class="px-6 py-2 rounded-lg font-semibold bg-blue-600 text-white shadow-md transition-colors duration-200 hover:bg-blue-700">Record</button>
+                <button id="reportsViewBtn" class="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 shadow-md transition-colors duration-200 hover:bg-gray-300">Reports</button>
+            </div>
+            
+            <!-- Main Form & List View -->
+            <div id="mainView">
+                <!-- Add Gate Pass Form -->
+                <form id="addGatePassForm" class="flex flex-col gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="gatepassTypeSelect" class="block text-sm font-medium text-gray-700">Gate Pass Type</label>
+                            <select id="gatepassTypeSelect" class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="Incoming">Incoming</option>
+                                <option value="Outgoing">Outgoing</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="itemSelect" class="block text-sm font-medium text-gray-700">Item</label>
+                            <select id="itemSelect" class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="Maize">Maize</option>
+                                <option value="Wheat">Wheat</option>
+                                <option value="Rice">Rice</option>
+                            </select>
+                        </div>
+                        <div class="dropdown-container">
+                            <label for="supplierSearchInput" class="block text-sm font-medium text-gray-700">Purchased From</label>
+                            <input type="text" id="supplierSearchInput" placeholder="Search or add new supplier" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                            <ul id="supplierDropdownList" class="dropdown-list hidden"></ul>
+                        </div>
+                        <div>
+                            <label for="truckNumber" class="block text-sm font-medium text-gray-700">Truck Number</label>
+                            <input type="text" id="truckNumber" placeholder="Truck Number" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                        </div>
+                        <div>
+                            <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                            <input type="date" id="date" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                        </div>
+                        <div>
+                            <label for="partyWeight" class="block text-sm font-medium text-gray-700">Party Weight ($kg$)</label>
+                            <input type="number" id="partyWeight" placeholder="Party Weight" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                        </div>
+                        <div>
+                            <label for="ownWeight" class="block text-sm font-medium text-gray-700">Own Weight ($kg$)</label>
+                            <input type="number" id="ownWeight" placeholder="Own Weight" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                        </div>
+                    </div>
+                    <button type="submit"
+                            class="w-full p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md mt-2">
+                        Add Gate Pass
+                    </button>
+                </form>
 
-        <!-- Inventory List -->
-        <div class="bg-gray-50 rounded-lg p-4">
-            <h2 class="text-lg font-semibold text-gray-700 mb-4">Current Inventory</h2>
-            <ul id="inventoryList" class="space-y-3">
-                <!-- Inventory items will be rendered here by JavaScript -->
-            </ul>
+                <!-- Gate Pass List -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Recent Gate Passes</h2>
+                    <input type="text" id="gatePassSearchInput" placeholder="Search by item, truck, or supplier..."
+                           class="w-full p-3 mb-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <ul id="gatePassList" class="space-y-3">
+                        <!-- Gate Passes will be rendered here by JavaScript -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Reports View -->
+            <div id="reportsView" class="hidden">
+                <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Inventory Report</h2>
+                <div id="inventoryReport" class="space-y-6">
+                    <!-- Report summary will be rendered here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Edit Gate Pass</h2>
+            <form id="editForm" class="flex flex-col gap-4">
+                <input type="hidden" id="editGatePassId">
+                <label for="editGatepassTypeSelect" class="block text-sm font-medium text-gray-700">Gate Pass Type</label>
+                <select id="editGatepassTypeSelect" class="block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Incoming">Incoming</option>
+                    <option value="Outgoing">Outgoing</option>
+                </select>
+                <label for="editItemSelect" class="block text-sm font-medium text-gray-700">Item</label>
+                <select id="editItemSelect" class="block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Maize">Maize</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Rice">Rice</option>
+                </select>
+                <div class="dropdown-container">
+                    <label for="editSupplierSearchInput" class="block text-sm font-medium text-gray-700">Purchased From</label>
+                    <input type="text" id="editSupplierSearchInput" required
+                           class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <ul id="editSupplierDropdownList" class="dropdown-list hidden"></ul>
+                </div>
+                <label for="editTruckNumber" class="block text-sm font-medium text-gray-700">Truck Number</label>
+                <input type="text" id="editTruckNumber" required
+                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label for="editDate" class="block text-sm font-medium text-gray-700">Date</label>
+                <input type="date" id="editDate" required
+                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label for="editPartyWeight" class="block text-sm font-medium text-gray-700">Party Weight ($kg$)</label>
+                <input type="number" id="editPartyWeight" required
+                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label for="editOwnWeight" class="block text-sm font-medium text-gray-700">Own Weight ($kg$)</label>
+                <input type="number" id="editOwnWeight" required
+                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" id="cancelEditButton" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">Save</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -49,7 +219,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Initialization
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -60,6 +230,7 @@
         let db;
         let userId;
         let userAuthReady = false;
+        let allGatePasses = [];
 
         try {
             if (Object.keys(firebaseConfig).length > 0) {
@@ -74,9 +245,33 @@
             console.error("Error initializing Firebase:", e);
         }
 
+        // DOM elements
         const userIdDisplay = document.getElementById('userIdDisplay');
-        const addItemForm = document.getElementById('addItemForm');
-        const inventoryList = document.getElementById('inventoryList');
+        const recordViewBtn = document.getElementById('recordViewBtn');
+        const reportsViewBtn = document.getElementById('reportsViewBtn');
+        const mainView = document.getElementById('mainView');
+        const reportsView = document.getElementById('reportsView');
+        const addGatePassForm = document.getElementById('addGatePassForm');
+        const gatePassList = document.getElementById('gatePassList');
+        const gatePassSearchInput = document.getElementById('gatePassSearchInput');
+        const supplierSearchInput = document.getElementById('supplierSearchInput');
+        const supplierDropdownList = document.getElementById('supplierDropdownList');
+        const gatepassTypeSelect = document.getElementById('gatepassTypeSelect');
+        const inventoryReport = document.getElementById('inventoryReport');
+        let allSuppliers = [];
+
+        const editModal = document.getElementById('editModal');
+        const editForm = document.getElementById('editForm');
+        const editGatePassIdInput = document.getElementById('editGatePassId');
+        const editItemSelectInput = document.getElementById('editItemSelect');
+        const editSupplierSearchInput = document.getElementById('editSupplierSearchInput');
+        const editSupplierDropdownList = document.getElementById('editSupplierDropdownList');
+        const editTruckNumberInput = document.getElementById('editTruckNumber');
+        const editDateInput = document.getElementById('editDate');
+        const editPartyWeightInput = document.getElementById('editPartyWeight');
+        const editOwnWeightInput = document.getElementById('editOwnWeight');
+        const editGatepassTypeSelect = document.getElementById('editGatepassTypeSelect');
+        const cancelEditButton = document.getElementById('cancelEditButton');
 
         // Authentication and Data Listener
         function setupAuthAndListener() {
@@ -85,7 +280,6 @@
                 return;
             }
 
-            // Sign in with custom token if available, otherwise anonymously
             const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
             if (initialAuthToken) {
                 signInWithCustomToken(auth, initialAuthToken)
@@ -104,93 +298,445 @@
                     userAuthReady = true;
                     userIdDisplay.textContent = userId;
                     console.log("User is authenticated:", userId);
-                    startRealtimeListener();
+                    startRealtimeListeners();
                 } else {
                     userId = crypto.randomUUID();
                     userAuthReady = true;
                     userIdDisplay.textContent = userId;
                     console.log("User is not authenticated, using a temporary ID:", userId);
-                    startRealtimeListener();
+                    startRealtimeListeners();
                 }
             });
         }
 
-        // Real-time listener for inventory data
-        function startRealtimeListener() {
+        // Real-time listeners for all data
+        function startRealtimeListeners() {
             if (!userAuthReady || !db) {
                 console.error("Authentication not ready or db not initialized.");
                 return;
             }
-            
-            // This is public data for a collaborative app, shared by all users.
-            const publicCollectionRef = collection(db, `artifacts/${appId}/public/data/inventory`);
-            
-            onSnapshot(publicCollectionRef, (snapshot) => {
-                inventoryList.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const item = doc.data();
-                    const listItem = document.createElement('li');
-                    listItem.id = `item-${doc.id}`;
-                    listItem.className = "flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200";
-                    
-                    const itemDetails = document.createElement('div');
-                    itemDetails.innerHTML = `
-                        <p class="font-medium text-gray-900">${item.name}</p>
-                        <p class="text-sm text-gray-500">Quantity: ${item.quantity}</p>
-                    `;
 
-                    const deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Delete';
-                    deleteButton.className = "p-2 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors";
-                    deleteButton.onclick = () => deleteItem(doc.id);
-
-                    listItem.appendChild(itemDetails);
-                    listItem.appendChild(deleteButton);
-                    inventoryList.appendChild(listItem);
-                });
+            // Listener for Suppliers
+            const suppliersRef = collection(db, `artifacts/${appId}/public/data/suppliers`);
+            onSnapshot(suppliersRef, (snapshot) => {
+                allSuppliers = [];
+                snapshot.forEach(doc => allSuppliers.push(doc.data().name));
             }, (error) => {
-                console.error("Error fetching inventory data:", error);
+                console.error("Error fetching suppliers:", error);
+            });
+
+            // Listener for Gate Passes
+            const gatePassesRef = collection(db, `artifacts/${appId}/public/data/gate_passes`);
+            onSnapshot(gatePassesRef, (snapshot) => {
+                allGatePasses = [];
+                snapshot.forEach((doc) => {
+                    const gatePass = { id: doc.id, ...doc.data() };
+                    allGatePasses.push(gatePass);
+                });
+                renderGatePasses(allGatePasses);
+                calculateAndRenderInventory(allGatePasses);
+            }, (error) => {
+                console.error("Error fetching gate pass data:", error);
+            });
+        }
+        
+        // Function to render gate passes based on a given array
+        function renderGatePasses(passes) {
+            gatePassList.innerHTML = '';
+            if (passes.length === 0) {
+                const noResults = document.createElement('li');
+                noResults.className = "text-center text-gray-500 py-4";
+                noResults.textContent = "No matching gate passes found.";
+                gatePassList.appendChild(noResults);
+                return;
+            }
+
+            passes.forEach((gatePass) => {
+                const listItem = document.createElement('li');
+                listItem.id = `gate-pass-${gatePass.id}`;
+                listItem.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200 gap-2 transition-shadow duration-200 hover:shadow-md";
+
+                const gatePassDetails = document.createElement('div');
+                gatePassDetails.className = "flex-1";
+                gatePassDetails.innerHTML = `
+                    <p class="font-bold text-gray-900">${gatePass.item}</p>
+                    <p class="text-sm text-gray-700">Type: <span class="font-medium">${gatePass.type}</span></p>
+                    <p class="text-sm text-gray-700">Purchased From: <span class="font-medium">${gatePass.purchasedFrom}</span></p>
+                    <p class="text-sm text-gray-700">Truck: <span class="font-medium">${gatePass.truckNumber}</span></p>
+                    <p class="text-sm text-gray-700">Date: <span class="font-medium">${gatePass.date}</span></p>
+                    <p class="text-sm text-gray-700">Party Weight: <span class="font-medium">${gatePass.partyWeight} kg</span></p>
+                    <p class="text-sm text-gray-700">Own Weight: <span class="font-medium">${gatePass.ownWeight} kg</span></p>
+                `;
+
+                // Container for buttons
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = "flex gap-2 self-end sm:self-center";
+
+                // Edit button
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.className = "p-2 bg-gray-500 text-white text-xs font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200";
+                editButton.onclick = () => showEditModal(gatePass.id, gatePass);
+
+                // Delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.className = "p-2 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200";
+                deleteButton.onclick = () => deleteGatePass(gatePass.id);
+
+                // Print button
+                const printButton = document.createElement('button');
+                printButton.textContent = 'Print';
+                printButton.className = "p-2 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-200";
+                printButton.onclick = () => printGatePass(gatePass);
+
+                buttonContainer.appendChild(editButton);
+                buttonContainer.appendChild(deleteButton);
+                buttonContainer.appendChild(printButton);
+                listItem.appendChild(gatePassDetails);
+                listItem.appendChild(buttonContainer);
+                gatePassList.appendChild(listItem);
+            });
+        }
+        
+        // Filter the gate pass list based on search input
+        gatePassSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filteredPasses = allGatePasses.filter(pass =>
+                pass.item.toLowerCase().includes(query) ||
+                pass.truckNumber.toLowerCase().includes(query) ||
+                pass.purchasedFrom.toLowerCase().includes(query)
+            );
+            renderGatePasses(filteredPasses);
+        });
+
+        function calculateAndRenderInventory(gatePasses) {
+            const inventory = {};
+            const itemTypes = ['Maize', 'Wheat', 'Rice'];
+
+            itemTypes.forEach(item => {
+                inventory[item] = { incoming: 0, outgoing: 0 };
+            });
+
+            gatePasses.forEach(pass => {
+                if (inventory[pass.item]) {
+                    if (pass.type === 'Incoming') {
+                        inventory[pass.item].incoming += pass.ownWeight;
+                    } else if (pass.type === 'Outgoing') {
+                        inventory[pass.item].outgoing += pass.ownWeight;
+                    }
+                }
+            });
+
+            renderInventoryReport(inventory);
+        }
+        
+        function renderInventoryReport(inventory) {
+            inventoryReport.innerHTML = ''; // Clear previous report
+            const itemTypes = Object.keys(inventory);
+
+            if (itemTypes.length === 0) {
+                inventoryReport.innerHTML = '<p class="text-center text-gray-500">No inventory data available. Add some gate passes to see the report.</p>';
+                return;
+            }
+
+            itemTypes.forEach(item => {
+                const itemData = inventory[item];
+                const netInventory = itemData.incoming - itemData.outgoing;
+                const netColor = netInventory >= 0 ? 'text-green-600' : 'text-red-600';
+                
+                const itemReportDiv = document.createElement('div');
+                itemReportDiv.className = 'bg-gray-100 p-4 rounded-lg shadow-sm';
+                itemReportDiv.innerHTML = `
+                    <h3 class="text-lg font-bold text-gray-800">${item}</h3>
+                    <div class="grid grid-cols-2 gap-4 mt-2 text-sm">
+                        <div class="bg-white p-3 rounded-lg shadow-sm">
+                            <p class="text-gray-600">Total Incoming</p>
+                            <p class="font-semibold text-green-600">${itemData.incoming.toLocaleString()} kg</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg shadow-sm">
+                            <p class="text-gray-600">Total Outgoing</p>
+                            <p class="font-semibold text-red-600">${itemData.outgoing.toLocaleString()} kg</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-3 rounded-lg shadow-sm mt-4">
+                        <p class="text-gray-600">Net Inventory</p>
+                        <p class="font-bold text-xl ${netColor}">${netInventory.toLocaleString()} kg</p>
+                    </div>
+                `;
+                inventoryReport.appendChild(itemReportDiv);
             });
         }
 
-        // Add item to Firestore
-        async function addItem(event) {
+        function populateSupplierDropdown(input, dropdownList, suppliers) {
+            const query = input.value.toLowerCase();
+            dropdownList.innerHTML = '';
+            const filteredSuppliers = suppliers.filter(s => s.toLowerCase().includes(query));
+
+            if (query.length > 0) {
+                // If a supplier with this name doesn't exist, show the "add new" option
+                if (!filteredSuppliers.some(s => s.toLowerCase() === query)) {
+                    const addOption = document.createElement('li');
+                    addOption.className = "p-3 bg-blue-100 text-blue-700 font-semibold cursor-pointer rounded-b-lg";
+                    addOption.textContent = `+ Add new supplier: "${input.value}"`;
+                    addOption.onclick = () => {
+                        input.value = input.value;
+                        dropdownList.classList.add('hidden');
+                    };
+                    dropdownList.appendChild(addOption);
+                }
+
+                filteredSuppliers.forEach(supplier => {
+                    const option = document.createElement('li');
+                    option.textContent = supplier;
+                    option.onclick = () => {
+                        input.value = supplier;
+                        dropdownList.classList.add('hidden');
+                    };
+                    dropdownList.appendChild(option);
+                });
+
+                if (dropdownList.children.length > 0) {
+                    dropdownList.classList.remove('hidden');
+                } else {
+                    dropdownList.classList.add('hidden');
+                }
+            } else {
+                dropdownList.classList.add('hidden');
+            }
+        }
+
+        // Handle input for main form supplier
+        supplierSearchInput.addEventListener('input', (e) => {
+            populateSupplierDropdown(e.target, supplierDropdownList, allSuppliers);
+        });
+
+        // Handle click outside to close dropdown
+        document.addEventListener('click', (e) => {
+            if (!supplierSearchInput.parentElement.contains(e.target)) {
+                supplierDropdownList.classList.add('hidden');
+            }
+        });
+
+        // Show the edit modal with the selected gate pass's data
+        function showEditModal(docId, gatePass) {
+            editGatePassIdInput.value = docId;
+            editGatepassTypeSelect.value = gatePass.type;
+            editItemSelectInput.value = gatePass.item;
+            editSupplierSearchInput.value = gatePass.purchasedFrom;
+            editTruckNumberInput.value = gatePass.truckNumber;
+            editDateInput.value = gatePass.date;
+            editPartyWeightInput.value = gatePass.partyWeight;
+            editOwnWeightInput.value = gatePass.ownWeight;
+            editModal.style.display = 'flex';
+        }
+        
+        // Handle input for edit modal supplier
+        editSupplierSearchInput.addEventListener('input', (e) => {
+            populateSupplierDropdown(e.target, editSupplierDropdownList, allSuppliers);
+        });
+
+        // Handle click outside to close edit modal dropdown
+        document.addEventListener('click', (e) => {
+            if (!editSupplierSearchInput.parentElement.contains(e.target) && !editModal.contains(e.target)) {
+                editSupplierDropdownList.classList.add('hidden');
+            }
+        });
+
+        // Hide the edit modal
+        function hideEditModal() {
+            editModal.style.display = 'none';
+        }
+
+        // Add gate pass to Firestore
+        async function addGatePass(event) {
+            event.preventDefault();
+            if (!userAuthReady || !db) {
+                console.error("User not authenticated or database not ready.");
+                return;
+            }
+            const type = gatepassTypeSelect.value;
+            const item = document.getElementById('itemSelect').value;
+            const purchasedFrom = supplierSearchInput.value;
+            const truckNumber = document.getElementById('truckNumber').value;
+            const date = document.getElementById('date').value;
+            const partyWeight = parseInt(document.getElementById('partyWeight').value, 10);
+            const ownWeight = parseInt(document.getElementById('ownWeight').value, 10);
+
+            // Check if the supplier is new and add it to the database
+            const supplierExists = allSuppliers.some(s => s === purchasedFrom);
+            if (!supplierExists) {
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/public/data/suppliers`), { name: purchasedFrom });
+                } catch (e) {
+                    console.error("Error adding new supplier:", e);
+                    return;
+                }
+            }
+
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/gate_passes`), {
+                    type,
+                    item,
+                    purchasedFrom,
+                    truckNumber,
+                    date,
+                    partyWeight,
+                    ownWeight,
+                    createdAt: new Date()
+                });
+                addGatePassForm.reset();
+                supplierDropdownList.classList.add('hidden');
+            } catch (e) {
+                console.error("Error adding document:", e);
+            }
+        }
+
+        // Save edited gate pass to Firestore
+        async function saveEdit(event) {
             event.preventDefault();
             if (!userAuthReady || !db) {
                 console.error("User not authenticated or database not ready.");
                 return;
             }
 
-            const itemName = document.getElementById('itemName').value;
-            const itemQuantity = parseInt(document.getElementById('itemQuantity').value, 10);
+            const docId = editGatePassIdInput.value;
+            const type = editGatepassTypeSelect.value;
+            const item = editItemSelectInput.value;
+            const purchasedFrom = editSupplierSearchInput.value;
+            const truckNumber = editTruckNumberInput.value;
+            const date = editDateInput.value;
+            const partyWeight = parseInt(editPartyWeightInput.value, 10);
+            const ownWeight = parseInt(editOwnWeightInput.value, 10);
+
+            // Check if the supplier is new and add it to the database
+            const supplierExists = allSuppliers.some(s => s === purchasedFrom);
+            if (!supplierExists) {
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/public/data/suppliers`), { name: purchasedFrom });
+                } catch (e) {
+                    console.error("Error adding new supplier:", e);
+                    return;
+                }
+            }
 
             try {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/inventory`), {
-                    name: itemName,
-                    quantity: itemQuantity,
-                    createdAt: new Date()
+                const gatePassRef = doc(db, `artifacts/${appId}/public/data/gate_passes`, docId);
+                await updateDoc(gatePassRef, {
+                    type,
+                    item,
+                    purchasedFrom,
+                    truckNumber,
+                    date,
+                    partyWeight,
+                    ownWeight,
                 });
-                document.getElementById('addItemForm').reset();
+                hideEditModal();
+                editSupplierDropdownList.classList.add('hidden');
             } catch (e) {
-                console.error("Error adding document:", e);
+                console.error("Error updating document:", e);
             }
         }
 
-        // Delete item from Firestore
-        async function deleteItem(docId) {
+        // Delete gate pass from Firestore
+        async function deleteGatePass(docId) {
             if (!userAuthReady || !db) {
                 console.error("User not authenticated or database not ready.");
                 return;
             }
             try {
-                await deleteDoc(doc(db, `artifacts/${appId}/public/data/inventory`, docId));
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/gate_passes`, docId));
             } catch (e) {
                 console.error("Error deleting document:", e);
             }
         }
+        
+        // Function to print a single gate pass
+        function printGatePass(gatePass) {
+            const date = new Date(gatePass.date + 'T00:00:00');
+            const formattedDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const printContent = `
+                <div class="print-container" style="padding: 2rem; max-width: 600px; margin: auto; font-family: 'Inter', sans-serif;">
+                    <h1 style="font-size: 1.5rem; font-weight: bold; text-align: center; margin-bottom: 1rem; color: #1f2937;">Gate Pass</h1>
+                    <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1.5rem; background-color: #f9fafb;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Date</p>
+                                <p style="font-weight: 500; color: #1f2937;">${formattedDate}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Gate Pass ID</p>
+                                <p style="font-weight: 500; color: #1f2937;">#${Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+                            </div>
+                        </div>
+                        <div style="border-top: 1px dashed #d1d5db; padding-top: 1rem; margin-top: 1rem;">
+                            <p style="font-size: 0.875rem; color: #6b7280;">Supplier</p>
+                            <p style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">${gatePass.purchasedFrom}</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Type</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.type}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Item</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.item}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Truck Number</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.truckNumber}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Party Weight</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.partyWeight} kg</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Own Weight</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.ownWeight} kg</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem; text-align: center; font-size: 0.75rem; color: #9ca3af;">
+                        <p>Generated by Grain Procurement System</p>
+                    </div>
+                </div>
+            `;
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
+
+        // Toggles between the main view and the reports view
+        function toggleView(view) {
+            if (view === 'reports') {
+                mainView.classList.add('hidden');
+                reportsView.classList.remove('hidden');
+                recordViewBtn.classList.remove('bg-blue-600', 'text-white');
+                recordViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+                reportsViewBtn.classList.add('bg-blue-600', 'text-white');
+                reportsViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+            } else {
+                mainView.classList.remove('hidden');
+                reportsView.classList.add('hidden');
+                recordViewBtn.classList.add('bg-blue-600', 'text-white');
+                recordViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+                reportsViewBtn.classList.remove('bg-blue-600', 'text-white');
+                reportsViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+            }
+        }
 
         // Attach event listeners
-        addItemForm.addEventListener('submit', addItem);
+        addGatePassForm.addEventListener('submit', addGatePass);
+        editForm.addEventListener('submit', saveEdit);
+        cancelEditButton.addEventListener('click', hideEditModal);
+        recordViewBtn.addEventListener('click', () => toggleView('record'));
+        reportsViewBtn.addEventListener('click', () => toggleView('reports'));
         window.onload = setupAuthAndListener;
     </script>
 </body>
