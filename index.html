@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Inventory Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 md:p-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-center mb-2 text-gray-800">Inventory Manager</h1>
+        <p class="text-center text-sm text-gray-500 mb-6">A simple, real-time inventory management tool.</p>
+
+        <!-- User Info Display -->
+        <div class="bg-gray-100 rounded-lg p-3 text-center mb-6">
+            <span class="text-xs font-semibold text-gray-600">Your User ID:</span>
+            <p id="userIdDisplay" class="text-sm font-mono text-gray-800 break-all mt-1"></p>
+        </div>
+
+        <!-- Add Item Form -->
+        <form id="addItemForm" class="flex flex-col md:flex-row gap-4 mb-6">
+            <input type="text" id="itemName" placeholder="Item Name" required
+                   class="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+            <input type="number" id="itemQuantity" placeholder="Quantity" required
+                   class="w-full md:w-28 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+            <button type="submit"
+                    class="w-full md:w-auto p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
+                Add Item
+            </button>
+        </form>
+
+        <!-- Inventory List -->
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Current Inventory</h2>
+            <ul id="inventoryList" class="space-y-3">
+                <!-- Inventory items will be rendered here by JavaScript -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Initialization
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        let app;
+        let auth;
+        let db;
+        let userId;
+        let userAuthReady = false;
+
+        try {
+            if (Object.keys(firebaseConfig).length > 0) {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('Debug');
+            } else {
+                console.error("Firebase config is missing. Please check the environment variables.");
+            }
+        } catch (e) {
+            console.error("Error initializing Firebase:", e);
+        }
+
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const addItemForm = document.getElementById('addItemForm');
+        const inventoryList = document.getElementById('inventoryList');
+
+        // Authentication and Data Listener
+        function setupAuthAndListener() {
+            if (!auth || !db) {
+                console.error("Firebase services are not initialized.");
+                return;
+            }
+
+            // Sign in with custom token if available, otherwise anonymously
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (initialAuthToken) {
+                signInWithCustomToken(auth, initialAuthToken)
+                    .then(() => console.log("Signed in with custom token"))
+                    .catch(error => {
+                        console.error("Error signing in with custom token:", error);
+                        signInAnonymously(auth).then(() => console.log("Signed in anonymously")).catch(console.error);
+                    });
+            } else {
+                signInAnonymously(auth).then(() => console.log("Signed in anonymously")).catch(console.error);
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    userAuthReady = true;
+                    userIdDisplay.textContent = userId;
+                    console.log("User is authenticated:", userId);
+                    startRealtimeListener();
+                } else {
+                    userId = crypto.randomUUID();
+                    userAuthReady = true;
+                    userIdDisplay.textContent = userId;
+                    console.log("User is not authenticated, using a temporary ID:", userId);
+                    startRealtimeListener();
+                }
+            });
+        }
+
+        // Real-time listener for inventory data
+        function startRealtimeListener() {
+            if (!userAuthReady || !db) {
+                console.error("Authentication not ready or db not initialized.");
+                return;
+            }
+            
+            // This is public data for a collaborative app, shared by all users.
+            const publicCollectionRef = collection(db, `artifacts/${appId}/public/data/inventory`);
+            
+            onSnapshot(publicCollectionRef, (snapshot) => {
+                inventoryList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const item = doc.data();
+                    const listItem = document.createElement('li');
+                    listItem.id = `item-${doc.id}`;
+                    listItem.className = "flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200";
+                    
+                    const itemDetails = document.createElement('div');
+                    itemDetails.innerHTML = `
+                        <p class="font-medium text-gray-900">${item.name}</p>
+                        <p class="text-sm text-gray-500">Quantity: ${item.quantity}</p>
+                    `;
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.className = "p-2 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors";
+                    deleteButton.onclick = () => deleteItem(doc.id);
+
+                    listItem.appendChild(itemDetails);
+                    listItem.appendChild(deleteButton);
+                    inventoryList.appendChild(listItem);
+                });
+            }, (error) => {
+                console.error("Error fetching inventory data:", error);
+            });
+        }
+
+        // Add item to Firestore
+        async function addItem(event) {
+            event.preventDefault();
+            if (!userAuthReady || !db) {
+                console.error("User not authenticated or database not ready.");
+                return;
+            }
+
+            const itemName = document.getElementById('itemName').value;
+            const itemQuantity = parseInt(document.getElementById('itemQuantity').value, 10);
+
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/inventory`), {
+                    name: itemName,
+                    quantity: itemQuantity,
+                    createdAt: new Date()
+                });
+                document.getElementById('addItemForm').reset();
+            } catch (e) {
+                console.error("Error adding document:", e);
+            }
+        }
+
+        // Delete item from Firestore
+        async function deleteItem(docId) {
+            if (!userAuthReady || !db) {
+                console.error("User not authenticated or database not ready.");
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/inventory`, docId));
+            } catch (e) {
+                console.error("Error deleting document:", e);
+            }
+        }
+
+        // Attach event listeners
+        addItemForm.addEventListener('submit', addItem);
+        window.onload = setupAuthAndListener;
+    </script>
+</body>
+</html>
