@@ -80,11 +80,48 @@
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white rounded-3xl shadow-custom w-full max-w-2xl">
-        <div class="header-bg text-white rounded-t-3xl p-6 md:p-8 text-center shadow-inner">
-            <h1 class="text-3xl md:text-4xl font-bold mb-2">Grain Procurement System</h1>
-            <p class="text-sm opacity-80">Record and track grain purchases in real-time.</p>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Login to Grain Procurement System</h2>
+            <form id="loginForm" class="flex flex-col gap-4">
+                <div>
+                    <label for="usernameInput" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="usernameInput" placeholder="Enter username" required
+                           class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="passwordInput" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="passwordInput" placeholder="Enter password" required
+                           class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    Login
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <p class="text-sm text-gray-600">Demo Users:</p>
+                <div class="mt-2 space-y-1 text-xs">
+                    <p><strong>Admin:</strong> admin / admin123</p>
+                    <p><strong>User 1:</strong> user1 / user123</p>
+                    <p><strong>User 2:</strong> user2 / user123</p>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <div id="mainApp" class="hidden">
+        <div class="bg-white rounded-3xl shadow-custom w-full max-w-2xl">
+            <div class="header-bg text-white rounded-t-3xl p-6 md:p-8 text-center shadow-inner">
+                <div class="flex justify-between items-center mb-2">
+                    <h1 class="text-3xl md:text-4xl font-bold">Grain Procurement System</h1>
+                    <button id="logoutBtn" class="px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors">
+                        Logout
+                    </button>
+                </div>
+                <p class="text-sm opacity-80">Record and track grain purchases in real-time.</p>
+                <div id="userInfo" class="mt-2 text-sm opacity-90"></div>
+            </div>
         <div class="p-6 md:p-8">
             <!-- System Status Indicator -->
             <div id="statusMessage" class="text-center p-2 rounded-lg mb-4 text-sm font-semibold text-gray-700 bg-gray-200">
@@ -100,6 +137,7 @@
             <div class="flex justify-center gap-4 mb-6">
                 <button id="recordViewBtn" class="px-6 py-2 rounded-lg font-semibold bg-blue-600 text-white shadow-md transition-colors duration-200 hover:bg-blue-700">Record</button>
                 <button id="reportsViewBtn" class="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 shadow-md transition-colors duration-200 hover:bg-gray-300">Reports</button>
+                <button id="adminViewBtn" class="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-800 shadow-md transition-colors duration-200 hover:bg-gray-300 hidden">Admin</button>
             </div>
             
             <!-- Main Form & List View -->
@@ -173,6 +211,65 @@
                     <!-- Report summary will be rendered here by JavaScript -->
                 </div>
             </div>
+
+            <!-- Admin View -->
+            <div id="adminView" class="hidden">
+                <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Admin Panel</h2>
+                <div class="space-y-6">
+                    <!-- User Management -->
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-3">User Management</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center p-2 bg-white rounded">
+                                <span>Admin User</span>
+                                <span class="text-green-600 font-semibold">Active</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-white rounded">
+                                <span>User 1</span>
+                                <span class="text-green-600 font-semibold">Active</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-white rounded">
+                                <span>User 2</span>
+                                <span class="text-green-600 font-semibold">Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Statistics -->
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-3">System Statistics</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white p-3 rounded text-center">
+                                <p class="text-2xl font-bold text-blue-600" id="totalGatePasses">0</p>
+                                <p class="text-sm text-gray-600">Total Gate Passes</p>
+                            </div>
+                            <div class="bg-white p-3 rounded text-center">
+                                <p class="text-2xl font-bold text-green-600" id="totalSuppliers">0</p>
+                                <p class="text-sm text-gray-600">Total Suppliers</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Permissions -->
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-3">Role Permissions</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span><strong>Admin:</strong></span>
+                                <span class="text-green-600">Full Access</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span><strong>User 1:</strong></span>
+                                <span class="text-blue-600">Add, View, Edit Gate Passes</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span><strong>User 2:</strong></span>
+                                <span class="text-orange-600">View Only</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -227,7 +324,16 @@
 
         // Firebase Initialization
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBFYB0khRLf_uhqEUBK9nLPaX1T5OoicgE",
+  authDomain: "fir-57151.firebaseapp.com",
+  projectId: "fir-57151",
+  storageBucket: "fir-57151.firebasestorage.app",
+  messagingSenderId: "306225912090",
+  appId: "1:306225912090:web:af5fca28357dad06ff74a3",
+  measurementId: "G-G7BLSR4PFS"
+
+        };
 
         let app;
         let auth;
@@ -235,6 +341,15 @@
         let userId;
         let userAuthReady = false;
         let allGatePasses = [];
+        let currentUser = null;
+        let userRole = null;
+
+        // Demo users database
+        const demoUsers = {
+            'admin': { password: 'admin123', role: 'admin', name: 'Administrator' },
+            'user1': { password: 'user123', role: 'user1', name: 'User 1' },
+            'user2': { password: 'user123', role: 'user2', name: 'User 2' }
+        };
 
         try {
             if (Object.keys(firebaseConfig).length > 0) {
@@ -250,6 +365,13 @@
         }
 
         // DOM elements
+        const loginModal = document.getElementById('loginModal');
+        const mainApp = document.getElementById('mainApp');
+        const loginForm = document.getElementById('loginForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userInfo = document.getElementById('userInfo');
+        const adminViewBtn = document.getElementById('adminViewBtn');
+        const adminView = document.getElementById('adminView');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const statusMessage = document.getElementById('statusMessage');
         const recordViewBtn = document.getElementById('recordViewBtn');
@@ -277,6 +399,89 @@
         const editOwnWeightInput = document.getElementById('editOwnWeight');
         const editGatepassTypeSelect = document.getElementById('editGatepassTypeSelect');
         const cancelEditButton = document.getElementById('cancelEditButton');
+
+        // Authentication Functions
+        function showLoginModal() {
+            loginModal.style.display = 'flex';
+            mainApp.classList.add('hidden');
+        }
+
+        function hideLoginModal() {
+            loginModal.style.display = 'none';
+            mainApp.classList.remove('hidden');
+        }
+
+        function login(username, password) {
+            const user = demoUsers[username];
+            if (user && user.password === password) {
+                currentUser = { username, ...user };
+                userRole = user.role;
+                hideLoginModal();
+                updateUIForUserRole();
+                setupAuthAndListener();
+                return true;
+            }
+            return false;
+        }
+
+        function logout() {
+            currentUser = null;
+            userRole = null;
+            showLoginModal();
+            // Reset UI
+            mainView.classList.remove('hidden');
+            reportsView.classList.add('hidden');
+            adminView.classList.add('hidden');
+            recordViewBtn.classList.add('bg-blue-600', 'text-white');
+            recordViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+            reportsViewBtn.classList.remove('bg-blue-600', 'text-white');
+            reportsViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+            adminViewBtn.classList.remove('bg-blue-600', 'text-white');
+            adminViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+        }
+
+        function updateUIForUserRole() {
+            if (!currentUser) return;
+
+            // Update user info display
+            userInfo.innerHTML = `
+                <div class="flex items-center justify-center gap-2">
+                    <span class="font-semibold">${currentUser.name}</span>
+                    <span class="px-2 py-1 bg-white bg-opacity-30 rounded text-xs">${userRole.toUpperCase()}</span>
+                </div>
+            `;
+
+            // Show/hide admin button based on role
+            if (userRole === 'admin') {
+                adminViewBtn.classList.remove('hidden');
+            } else {
+                adminViewBtn.classList.add('hidden');
+            }
+
+            // Update form permissions based on role
+            updateFormPermissions();
+        }
+
+        function updateFormPermissions() {
+            const canAdd = userRole === 'admin' || userRole === 'user1';
+            const canEdit = userRole === 'admin' || userRole === 'user1';
+            const canDelete = userRole === 'admin';
+
+            // Enable/disable add form
+            addGatePassForm.style.display = canAdd ? 'flex' : 'none';
+            
+            // Update gate pass list permissions
+            const editButtons = document.querySelectorAll('button[onclick*="showEditModal"]');
+            const deleteButtons = document.querySelectorAll('button[onclick*="deleteGatePass"]');
+            
+            editButtons.forEach(btn => {
+                btn.style.display = canEdit ? 'block' : 'none';
+            });
+            
+            deleteButtons.forEach(btn => {
+                btn.style.display = canDelete ? 'block' : 'none';
+            });
+        }
 
         // Authentication and Data Listener
         function setupAuthAndListener() {
@@ -388,17 +593,25 @@
                 const buttonContainer = document.createElement('div');
                 buttonContainer.className = "flex gap-2 self-end sm:self-center";
 
-                // Edit button
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Edit';
-                editButton.className = "p-2 bg-gray-500 text-white text-xs font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200";
-                editButton.onclick = () => showEditModal(gatePass.id, gatePass);
+                // Edit button (role-based)
+                const canEdit = userRole === 'admin' || userRole === 'user1';
+                if (canEdit) {
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.className = "p-2 bg-gray-500 text-white text-xs font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200";
+                    editButton.onclick = () => showEditModal(gatePass.id, gatePass);
+                    buttonContainer.appendChild(editButton);
+                }
 
-                // Delete button
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.className = "p-2 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200";
-                deleteButton.onclick = () => deleteGatePass(gatePass.id);
+                // Delete button (admin only)
+                const canDelete = userRole === 'admin';
+                if (canDelete) {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.className = "p-2 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200";
+                    deleteButton.onclick = () => deleteGatePass(gatePass.id);
+                    buttonContainer.appendChild(deleteButton);
+                }
 
                 // Print button
                 const printButton = document.createElement('button');
@@ -406,8 +619,6 @@
                 printButton.className = "p-2 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-200";
                 printButton.onclick = () => printGatePass(gatePass);
 
-                buttonContainer.appendChild(editButton);
-                buttonContainer.appendChild(deleteButton);
                 buttonContainer.appendChild(printButton);
                 listItem.appendChild(gatePassDetails);
                 listItem.appendChild(buttonContainer);
@@ -728,32 +939,68 @@
             }, 500);
         }
 
-        // Toggles between the main view and the reports view
+        // Toggles between the main view, reports view, and admin view
         function toggleView(view) {
+            // Reset all views
+            mainView.classList.add('hidden');
+            reportsView.classList.add('hidden');
+            adminView.classList.add('hidden');
+            
+            // Reset all buttons
+            recordViewBtn.classList.remove('bg-blue-600', 'text-white');
+            recordViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+            reportsViewBtn.classList.remove('bg-blue-600', 'text-white');
+            reportsViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+            adminViewBtn.classList.remove('bg-blue-600', 'text-white');
+            adminViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+            
             if (view === 'reports') {
-                mainView.classList.add('hidden');
                 reportsView.classList.remove('hidden');
-                recordViewBtn.classList.remove('bg-blue-600', 'text-white');
-                recordViewBtn.classList.add('bg-gray-200', 'text-gray-800');
                 reportsViewBtn.classList.add('bg-blue-600', 'text-white');
                 reportsViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+            } else if (view === 'admin') {
+                adminView.classList.remove('hidden');
+                adminViewBtn.classList.add('bg-blue-600', 'text-white');
+                adminViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+                updateAdminStats();
             } else {
                 mainView.classList.remove('hidden');
-                reportsView.classList.add('hidden');
                 recordViewBtn.classList.add('bg-blue-600', 'text-white');
                 recordViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
-                reportsViewBtn.classList.remove('bg-blue-600', 'text-white');
-                reportsViewBtn.classList.add('bg-gray-200', 'text-gray-800');
             }
         }
 
+        function updateAdminStats() {
+            document.getElementById('totalGatePasses').textContent = allGatePasses.length;
+            document.getElementById('totalSuppliers').textContent = allSuppliers.length;
+        }
+
         // Attach event listeners
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            if (login(username, password)) {
+                document.getElementById('usernameInput').value = '';
+                document.getElementById('passwordInput').value = '';
+            } else {
+                alert('Invalid username or password');
+            }
+        });
+
+        logoutBtn.addEventListener('click', logout);
         addGatePassForm.addEventListener('submit', addGatePass);
         editForm.addEventListener('submit', saveEdit);
         cancelEditButton.addEventListener('click', hideEditModal);
         recordViewBtn.addEventListener('click', () => toggleView('record'));
         reportsViewBtn.addEventListener('click', () => toggleView('reports'));
-        window.onload = setupAuthAndListener;
+        adminViewBtn.addEventListener('click', () => toggleView('admin'));
+        
+        // Initialize app
+        window.onload = () => {
+            showLoginModal();
+        };
     </script>
 </body>
 </html>
