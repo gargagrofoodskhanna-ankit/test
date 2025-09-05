@@ -128,6 +128,16 @@
                 Connecting to system...
             </div>
 
+            <!-- Sync Status and Manual Sync Button -->
+            <div id="syncStatus" class="text-center mb-4">
+                <div class="flex items-center justify-center gap-2">
+                    <span id="syncStatusText" class="text-sm text-gray-600"></span>
+                    <button id="manualSyncBtn" class="hidden px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors">
+                        Retry Sync
+                    </button>
+                </div>
+            </div>
+
             <!-- Success/Error Notification -->
             <div id="notification" class="hidden fixed top-4 right-4 z-50 max-w-sm">
                 <div class="bg-white rounded-lg shadow-lg border-l-4 p-4">
@@ -400,13 +410,51 @@
         // Test Firebase connection
         async function testFirebaseConnection() {
             try {
-                const testRef = collection(db, 'test');
-                console.log("Testing Firebase connection...");
-                // Just test if we can access the database
-                console.log("Firebase connection test successful");
+                console.log("🔍 Testing Firebase connection...");
+                console.log("Auth state:", auth);
+                console.log("Database state:", db);
+                
+                // First, ensure we're authenticated
+                if (!auth.currentUser) {
+                    console.log("🔑 No user authenticated, signing in anonymously...");
+                    await signInAnonymously(auth);
+                    console.log("✅ Anonymous authentication successful");
+                }
+                
+                // Test writing to Firebase
+                const testDoc = {
+                    test: true,
+                    timestamp: new Date(),
+                    message: "Connection test"
+                };
+                
+                console.log("📝 Testing write permission...");
+                const docRef = await addDoc(collection(db, 'connection_test'), testDoc);
+                console.log("✅ Write test successful! Doc ID:", docRef.id);
+                
+                // Clean up test document
+                await deleteDoc(doc(db, 'connection_test', docRef.id));
+                console.log("🧹 Test document cleaned up");
+                
+                console.log("🎉 Firebase connection test completely successful!");
+                showNotification("Firebase connection verified successfully!", 'success');
+                
             } catch (e) {
-                console.error("Firebase connection test failed:", e);
-                showNotification("Database connection failed. Using local storage as fallback.", 'error');
+                console.error("❌ Firebase connection test failed:", e);
+                console.error("Error code:", e.code);
+                console.error("Error message:", e.message);
+                
+                if (e.code === 'permission-denied') {
+                    console.error("🚫 Permission denied - Check Firebase Security Rules");
+                    showNotification("Firebase permission denied. Check database rules.", 'error');
+                } else if (e.code === 'unavailable') {
+                    console.error("🌐 Firebase service unavailable");
+                    showNotification("Firebase service unavailable. Using local storage.", 'error');
+                } else {
+                    console.error("🔥 Other Firebase error:", e.code);
+                    showNotification(`Firebase error: ${e.message}`, 'error');
+                }
+                
                 useLocalStorage = true;
             }
         }
@@ -486,6 +534,8 @@
         const saveGatePassBtn = document.getElementById('saveGatePassBtn');
         const saveBtnText = document.getElementById('saveBtnText');
         const saveBtnSpinner = document.getElementById('saveBtnSpinner');
+        const syncStatusText = document.getElementById('syncStatusText');
+        const manualSyncBtn = document.getElementById('manualSyncBtn');
         let allSuppliers = [];
         let useLocalStorage = false; // Fallback flag
 
@@ -649,7 +699,7 @@
         }
 
         // Authentication and Data Listener
-        function setupAuthAndListener() {
+        async function setupAuthAndListener() {
             if (!auth || !db) {
                 console.error("Firebase services are not initialized.");
                 statusMessage.textContent = "Error: System not initialized";
@@ -659,29 +709,51 @@
             }
 
             statusMessage.textContent = "Connecting to system...";
+            console.log("🔧 Setting up authentication and listeners...");
 
-            // Use the current user's ID from our role-based system
-            if (currentUser) {
-                userId = currentUser.username + '_' + currentUser.role;
+            try {
+                // Always authenticate with Firebase for data access
+                if (!auth.currentUser) {
+                    console.log("🔑 Authenticating with Firebase...");
+                    await signInAnonymously(auth);
+                    console.log("✅ Firebase authentication successful");
+                }
+
+                // Set user ID and mark as ready
+                if (currentUser) {
+                    userId = currentUser.username + '_' + currentUser.role;
+                    console.log("📝 User authenticated with role:", currentUser.role);
+                    statusMessage.textContent = `System Ready - ${currentUser.name} (${userRole.toUpperCase()})`;
+                } else {
+                    userId = auth.currentUser?.uid || crypto.randomUUID();
+                    console.log("📝 Anonymous user authenticated");
+                    statusMessage.textContent = "System Ready (Anonymous Session)";
+                }
+
                 userAuthReady = true;
                 userIdDisplay.textContent = userId;
-                console.log("User authenticated with role:", currentUser.role);
-                startRealtimeListeners();
-                statusMessage.textContent = `System Ready - ${currentUser.name} (${userRole.toUpperCase()})`;
                 statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
                 statusMessage.classList.add('bg-green-200', 'text-green-800');
-            } else {
-                // Fallback to anonymous authentication if no user is logged in
-                signInAnonymously(auth).then(() => {
-                    console.log("Signed in anonymously");
-                    userId = auth.currentUser?.uid || crypto.randomUUID();
-                    userAuthReady = true;
-                    userIdDisplay.textContent = userId;
-                    startRealtimeListeners();
-                    statusMessage.textContent = "System Ready (Anonymous Session)";
-                    statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
-                    statusMessage.classList.add('bg-green-200', 'text-green-800');
-                }).catch(console.error);
+
+                // Start data listeners
+                startRealtimeListeners();
+
+                console.log("🎉 Authentication and setup complete!");
+
+            } catch (error) {
+                console.error("❌ Authentication failed:", error);
+                showNotification("Authentication failed. Using offline mode.", 'error');
+                
+                // Fallback to local-only mode
+                userId = currentUser ? currentUser.username + '_' + currentUser.role : 'offline_user';
+                userAuthReady = false; // Mark as not ready for Firebase operations
+                userIdDisplay.textContent = userId;
+                statusMessage.textContent = "System Ready (Offline Mode)";
+                statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
+                statusMessage.classList.add('bg-yellow-200', 'text-yellow-800');
+                
+                // Load local data only
+                loadLocalData();
             }
         }
 
@@ -1059,6 +1131,9 @@
                 showNotification("Gate pass saved successfully!", 'success');
                 console.log("=== SAVE COMPLETED SUCCESSFULLY ===");
                 
+                // Update sync status
+                updateSyncStatus();
+                
                 // Try to sync to Firebase in background (optional)
                 if (db && userAuthReady) {
                     syncToFirebaseInBackground(gatePassData, purchasedFrom);
@@ -1075,18 +1150,37 @@
         async function syncToFirebaseInBackground(gatePassData, supplierName) {
             try {
                 console.log("🔄 Attempting background sync to Firebase...");
+                console.log("Auth ready:", userAuthReady);
+                console.log("Current user:", auth?.currentUser?.uid);
+                console.log("Database ready:", !!db);
                 
+                // Check if Firebase is ready
+                if (!db || !auth) {
+                    throw new Error("Firebase not initialized");
+                }
+                
+                // Ensure we're authenticated
+                if (!auth.currentUser) {
+                    console.log("🔑 Re-authenticating for sync...");
+                    await signInAnonymously(auth);
+                    console.log("✅ Re-authentication successful");
+                }
+                
+                console.log("📤 Syncing supplier if new...");
                 // Add supplier if new
                 const supplierExists = allSuppliers.some(s => s === supplierName);
                 if (!supplierExists) {
-                    await addDoc(collection(db, 'suppliers'), { 
+                    const supplierDoc = await addDoc(collection(db, 'suppliers'), { 
                         name: supplierName,
                         createdAt: new Date(),
-                        createdBy: userId
+                        createdBy: userId || auth.currentUser.uid
                     });
-                    console.log("✅ Supplier synced to Firebase");
+                    console.log("✅ Supplier synced to Firebase with ID:", supplierDoc.id);
+                } else {
+                    console.log("ℹ️ Supplier already exists, skipping");
                 }
 
+                console.log("📤 Syncing gate pass...");
                 // Add gate pass
                 const docRef = await addDoc(collection(db, 'gate_passes'), {
                     type: gatePassData.type,
@@ -1097,8 +1191,8 @@
                     partyWeight: gatePassData.partyWeight,
                     ownWeight: gatePassData.ownWeight,
                     createdAt: new Date(),
-                    userId: gatePassData.userId,
-                    userRole: gatePassData.userRole,
+                    userId: gatePassData.userId || auth.currentUser.uid,
+                    userRole: gatePassData.userRole || 'user',
                     status: 'active'
                 });
                 
@@ -1111,13 +1205,76 @@
                     item.savedToFirebase = true;
                     item.firebaseId = docRef.id;
                     saveToLocalStorage('gate_passes', localData);
+                    console.log("✅ Local data marked as synced");
                 }
                 
                 showNotification("Data synced to cloud successfully!", 'success');
                 
             } catch (error) {
-                console.error("Background sync to Firebase failed:", error);
-                console.log("Data remains saved locally and will sync when connection improves");
+                console.error("❌ Background sync to Firebase failed:", error);
+                console.error("Error code:", error.code);
+                console.error("Error message:", error.message);
+                
+                if (error.code === 'permission-denied') {
+                    console.error("🚫 Permission denied - Check Firebase Security Rules");
+                    showNotification("Sync failed: Permission denied. Check database configuration.", 'error');
+                } else if (error.code === 'unavailable') {
+                    console.error("🌐 Firebase service unavailable");
+                    showNotification("Sync failed: Firebase service unavailable.", 'error');
+                } else if (error.message.includes('not initialized')) {
+                    console.error("🔧 Firebase not properly initialized");
+                    showNotification("Sync failed: Database not ready.", 'error');
+                } else {
+                    console.error("🔥 Other Firebase error");
+                    showNotification(`Sync failed: ${error.message}`, 'error');
+                }
+                
+                console.log("📱 Data remains saved locally and will sync when connection improves");
+                updateSyncStatus();
+            }
+        }
+
+        // Update sync status display
+        function updateSyncStatus() {
+            const localData = loadFromLocalStorage('gate_passes');
+            const unsyncedCount = localData.filter(item => !item.savedToFirebase).length;
+            
+            if (unsyncedCount > 0) {
+                syncStatusText.textContent = `${unsyncedCount} records pending sync`;
+                manualSyncBtn.classList.remove('hidden');
+            } else {
+                syncStatusText.textContent = "All data synced";
+                manualSyncBtn.classList.add('hidden');
+            }
+        }
+
+        // Manual sync function
+        async function manualSync() {
+            console.log("🔄 Manual sync requested...");
+            manualSyncBtn.disabled = true;
+            manualSyncBtn.textContent = "Syncing...";
+            
+            try {
+                const localData = loadFromLocalStorage('gate_passes');
+                const unsyncedItems = localData.filter(item => !item.savedToFirebase);
+                
+                console.log(`📤 Found ${unsyncedItems.length} unsynced items`);
+                
+                for (const item of unsyncedItems) {
+                    await syncToFirebaseInBackground(item, item.purchasedFrom);
+                    // Small delay between syncs
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                showNotification("Manual sync completed successfully!", 'success');
+                
+            } catch (error) {
+                console.error("Manual sync failed:", error);
+                showNotification("Manual sync failed. Please try again.", 'error');
+            } finally {
+                manualSyncBtn.disabled = false;
+                manualSyncBtn.textContent = "Retry Sync";
+                updateSyncStatus();
             }
         }
 
@@ -1303,6 +1460,7 @@
         editForm.addEventListener('submit', saveEdit);
         cancelEditButton.addEventListener('click', hideEditModal);
         closeNotification.addEventListener('click', hideNotification);
+        manualSyncBtn.addEventListener('click', manualSync);
         recordViewBtn.addEventListener('click', () => toggleView('record'));
         reportsViewBtn.addEventListener('click', () => toggleView('reports'));
         adminViewBtn.addEventListener('click', () => toggleView('admin'));
