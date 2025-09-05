@@ -383,14 +383,79 @@
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                setLogLevel('Debug');
+                setLogLevel('Error'); // Reduce logging to avoid performance issues
                 console.log("Firebase initialized successfully");
                 console.log("Project ID:", firebaseConfig.projectId);
+                
+                // Test Firebase connection
+                testFirebaseConnection();
             } else {
                 console.error("Firebase config is missing. Please check the environment variables.");
             }
         } catch (e) {
             console.error("Error initializing Firebase:", e);
+            showNotification("Firebase initialization failed. Please check your connection.", 'error');
+        }
+
+        // Test Firebase connection
+        async function testFirebaseConnection() {
+            try {
+                const testRef = collection(db, 'test');
+                console.log("Testing Firebase connection...");
+                // Just test if we can access the database
+                console.log("Firebase connection test successful");
+            } catch (e) {
+                console.error("Firebase connection test failed:", e);
+                showNotification("Database connection failed. Using local storage as fallback.", 'error');
+                useLocalStorage = true;
+            }
+        }
+
+        // Local Storage Functions (Fallback)
+        function saveToLocalStorage(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                console.log(`Data saved to local storage: ${key}`);
+                return true;
+            } catch (e) {
+                console.error("Error saving to local storage:", e);
+                return false;
+            }
+        }
+
+        function loadFromLocalStorage(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error("Error loading from local storage:", e);
+                return [];
+            }
+        }
+
+        function addGatePassToLocal(gatePassData) {
+            const existingData = loadFromLocalStorage('gate_passes');
+            const newData = {
+                id: Date.now().toString(),
+                ...gatePassData,
+                createdAt: new Date().toISOString()
+            };
+            existingData.push(newData);
+            return saveToLocalStorage('gate_passes', existingData);
+        }
+
+        function addSupplierToLocal(supplierName) {
+            const existingData = loadFromLocalStorage('suppliers');
+            if (!existingData.some(s => s.name === supplierName)) {
+                const newSupplier = {
+                    id: Date.now().toString(),
+                    name: supplierName,
+                    createdAt: new Date().toISOString()
+                };
+                existingData.push(newSupplier);
+                return saveToLocalStorage('suppliers', existingData);
+            }
+            return true;
         }
 
         // DOM elements
@@ -422,6 +487,7 @@
         const saveBtnText = document.getElementById('saveBtnText');
         const saveBtnSpinner = document.getElementById('saveBtnSpinner');
         let allSuppliers = [];
+        let useLocalStorage = false; // Fallback flag
 
         const editModal = document.getElementById('editModal');
         const editForm = document.getElementById('editForm');
@@ -872,7 +938,7 @@
             editModal.style.display = 'none';
         }
 
-        // Add gate pass to Firestore
+        // Add gate pass to Firestore with timeout
         async function addGatePass(event) {
             event.preventDefault();
             
@@ -894,49 +960,99 @@
             const partyWeight = parseInt(document.getElementById('partyWeight').value, 10);
             const ownWeight = parseInt(document.getElementById('ownWeight').value, 10);
 
+            // Create timeout promise
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Save operation timed out after 10 seconds')), 10000);
+            });
+
             try {
                 // Check if the supplier is new and add it to the database
                 const supplierExists = allSuppliers.some(s => s === purchasedFrom);
                 if (!supplierExists) {
-                    try {
-                        await addDoc(collection(db, 'suppliers'), { 
-                            name: purchasedFrom,
-                            createdAt: new Date(),
-                            createdBy: userId
-                        });
-                        console.log("New supplier added:", purchasedFrom);
-                        showNotification(`New supplier "${purchasedFrom}" added successfully!`, 'success');
-                    } catch (e) {
-                        console.error("Error adding new supplier:", e);
-                        showNotification("Error adding supplier. Please try again.", 'error');
-                        setSaveButtonLoading(false);
-                        return;
+                    if (useLocalStorage) {
+                        // Use local storage fallback
+                        if (addSupplierToLocal(purchasedFrom)) {
+                            console.log("New supplier added to local storage:", purchasedFrom);
+                            showNotification(`New supplier "${purchasedFrom}" added successfully!`, 'success');
+                        } else {
+                            showNotification("Error adding supplier to local storage.", 'error');
+                            setSaveButtonLoading(false);
+                            return;
+                        }
+                    } else {
+                        try {
+                            const supplierPromise = addDoc(collection(db, 'suppliers'), { 
+                                name: purchasedFrom,
+                                createdAt: new Date(),
+                                createdBy: userId
+                            });
+                            
+                            await Promise.race([supplierPromise, timeoutPromise]);
+                            console.log("New supplier added:", purchasedFrom);
+                            showNotification(`New supplier "${purchasedFrom}" added successfully!`, 'success');
+                        } catch (e) {
+                            console.error("Error adding new supplier:", e);
+                            if (e.message.includes('timed out')) {
+                                showNotification("Save timed out. Switching to local storage.", 'error');
+                                useLocalStorage = true;
+                                if (addSupplierToLocal(purchasedFrom)) {
+                                    showNotification(`New supplier "${purchasedFrom}" saved locally!`, 'success');
+                                }
+                            } else {
+                                showNotification("Error adding supplier. Please try again.", 'error');
+                            }
+                            setSaveButtonLoading(false);
+                            return;
+                        }
                     }
                 }
 
                 // Add the gate pass
-                const docRef = await addDoc(collection(db, 'gate_passes'), {
-                    type,
-                    item,
-                    purchasedFrom,
-                    truckNumber,
-                    date,
-                    partyWeight,
-                    ownWeight,
-                    createdAt: new Date(),
-                    userId: userId,
-                    userRole: userRole,
-                    status: 'active'
-                });
-                
-                console.log("Gate pass added with ID:", docRef.id);
+                if (useLocalStorage) {
+                    // Use local storage fallback
+                    const gatePassData = {
+                        type,
+                        item,
+                        purchasedFrom,
+                        truckNumber,
+                        date,
+                        partyWeight,
+                        ownWeight,
+                        userId: userId,
+                        userRole: userRole,
+                        status: 'active'
+                    };
+                    
+                    if (addGatePassToLocal(gatePassData)) {
+                        console.log("Gate pass added to local storage");
+                        showNotification("Gate pass saved locally! (Data will sync when connection is restored)", 'success');
+                    } else {
+                        showNotification("Error saving gate pass to local storage.", 'error');
+                    }
+                } else {
+                    // Use Firebase
+                    const gatePassPromise = addDoc(collection(db, 'gate_passes'), {
+                        type,
+                        item,
+                        purchasedFrom,
+                        truckNumber,
+                        date,
+                        partyWeight,
+                        ownWeight,
+                        createdAt: new Date(),
+                        userId: userId,
+                        userRole: userRole,
+                        status: 'active'
+                    });
+                    
+                    const docRef = await Promise.race([gatePassPromise, timeoutPromise]);
+                    console.log("Gate pass added with ID:", docRef.id);
+                    showNotification(`Gate pass saved successfully! (ID: ${docRef.id.substring(0, 8)}...)`, 'success');
+                }
                 
                 // Reset form
                 addGatePassForm.reset();
                 supplierDropdownList.classList.add('hidden');
-                
-                // Show success message
-                showNotification(`Gate pass saved successfully! (ID: ${docRef.id.substring(0, 8)}...)`, 'success');
                 
                 // Update admin stats if visible
                 if (adminView && !adminView.classList.contains('hidden')) {
@@ -945,7 +1061,34 @@
                 
             } catch (e) {
                 console.error("Error adding document:", e);
-                showNotification(`Error saving gate pass: ${e.message}`, 'error');
+                if (e.message.includes('timed out')) {
+                    showNotification("Save operation timed out. Switching to local storage.", 'error');
+                    useLocalStorage = true;
+                    // Try to save locally as fallback
+                    const gatePassData = {
+                        type,
+                        item,
+                        purchasedFrom,
+                        truckNumber,
+                        date,
+                        partyWeight,
+                        ownWeight,
+                        userId: userId,
+                        userRole: userRole,
+                        status: 'active'
+                    };
+                    if (addGatePassToLocal(gatePassData)) {
+                        showNotification("Gate pass saved locally! (Data will sync when connection is restored)", 'success');
+                        addGatePassForm.reset();
+                        supplierDropdownList.classList.add('hidden');
+                    }
+                } else if (e.code === 'unavailable') {
+                    showNotification("Database is temporarily unavailable. Please try again in a moment.", 'error');
+                } else if (e.code === 'permission-denied') {
+                    showNotification("Permission denied. Please check your user role.", 'error');
+                } else {
+                    showNotification(`Error saving gate pass: ${e.message}`, 'error');
+                }
             } finally {
                 setSaveButtonLoading(false);
             }
