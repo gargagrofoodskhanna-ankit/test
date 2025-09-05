@@ -427,6 +427,8 @@
         function logout() {
             currentUser = null;
             userRole = null;
+            userAuthReady = false;
+            userId = null;
             showLoginModal();
             // Reset UI
             mainView.classList.remove('hidden');
@@ -438,6 +440,10 @@
             reportsViewBtn.classList.add('bg-gray-200', 'text-gray-800');
             adminViewBtn.classList.remove('bg-blue-600', 'text-white');
             adminViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+            // Reset status message
+            statusMessage.textContent = "Please log in to continue";
+            statusMessage.classList.remove('bg-green-200', 'text-green-800');
+            statusMessage.classList.add('bg-gray-200', 'text-gray-700');
         }
 
         function updateUIForUserRole() {
@@ -495,39 +501,29 @@
 
             statusMessage.textContent = "Connecting to system...";
 
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            if (initialAuthToken) {
-                signInWithCustomToken(auth, initialAuthToken)
-                    .then(() => console.log("Signed in with custom token"))
-                    .catch(error => {
-                        console.error("Error signing in with custom token:", error);
-                        signInAnonymously(auth).then(() => console.log("Signed in anonymously")).catch(console.error);
-                    });
+            // Use the current user's ID from our role-based system
+            if (currentUser) {
+                userId = currentUser.username + '_' + currentUser.role;
+                userAuthReady = true;
+                userIdDisplay.textContent = userId;
+                console.log("User authenticated with role:", currentUser.role);
+                startRealtimeListeners();
+                statusMessage.textContent = `System Ready - ${currentUser.name} (${userRole.toUpperCase()})`;
+                statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
+                statusMessage.classList.add('bg-green-200', 'text-green-800');
             } else {
-                signInAnonymously(auth).then(() => console.log("Signed in anonymously")).catch(console.error);
+                // Fallback to anonymous authentication if no user is logged in
+                signInAnonymously(auth).then(() => {
+                    console.log("Signed in anonymously");
+                    userId = auth.currentUser?.uid || crypto.randomUUID();
+                    userAuthReady = true;
+                    userIdDisplay.textContent = userId;
+                    startRealtimeListeners();
+                    statusMessage.textContent = "System Ready (Anonymous Session)";
+                    statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
+                    statusMessage.classList.add('bg-green-200', 'text-green-800');
+                }).catch(console.error);
             }
-
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    userAuthReady = true;
-                    userIdDisplay.textContent = userId;
-                    console.log("User is authenticated:", userId);
-                    startRealtimeListeners();
-                    statusMessage.textContent = "System Ready";
-                    statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
-                    statusMessage.classList.add('bg-green-200', 'text-green-800');
-                } else {
-                    userId = crypto.randomUUID();
-                    userAuthReady = true;
-                    userIdDisplay.textContent = userId;
-                    console.log("User is not authenticated, using a temporary ID:", userId);
-                    startRealtimeListeners();
-                    statusMessage.textContent = "System Ready (Temporary Session)";
-                    statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
-                    statusMessage.classList.add('bg-green-200', 'text-green-800');
-                }
-            });
         }
 
         // Real-time listeners for all data
