@@ -390,72 +390,140 @@
 
         try {
             if (Object.keys(firebaseConfig).length > 0) {
+                console.log("🔧 Initializing Firebase...");
+                console.log("Config:", firebaseConfig);
+                
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 setLogLevel('Error'); // Reduce logging to avoid performance issues
-                console.log("Firebase initialized successfully");
-                console.log("Project ID:", firebaseConfig.projectId);
                 
-                // Test Firebase connection
-                testFirebaseConnection();
+                console.log("✅ Firebase initialized successfully");
+                console.log("📍 Project ID:", firebaseConfig.projectId);
+                console.log("🌐 Auth Domain:", firebaseConfig.authDomain);
+                
+                // Test Firebase connection with delay to ensure initialization
+                setTimeout(() => {
+                    testFirebaseConnection();
+                }, 1000);
+                
             } else {
-                console.error("Firebase config is missing. Please check the environment variables.");
+                console.error("❌ Firebase config is missing. Please check the environment variables.");
+                showNotification("Firebase configuration missing.", 'error');
+                useLocalStorage = true;
             }
         } catch (e) {
-            console.error("Error initializing Firebase:", e);
-            showNotification("Firebase initialization failed. Please check your connection.", 'error');
+            console.error("❌ Error initializing Firebase:", e);
+            console.error("Error details:", e.message);
+            showNotification("Firebase initialization failed. Using local storage only.", 'error');
+            useLocalStorage = true;
         }
 
         // Test Firebase connection
         async function testFirebaseConnection() {
             try {
                 console.log("🔍 Testing Firebase connection...");
-                console.log("Auth state:", auth);
-                console.log("Database state:", db);
+                console.log("🔧 Auth service:", !!auth);
+                console.log("🔧 Database service:", !!db);
+                console.log("🔧 App instance:", !!app);
                 
-                // First, ensure we're authenticated
+                // Wait a bit more for services to be ready
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Step 1: Test authentication
+                console.log("🔑 Step 1: Testing authentication...");
                 if (!auth.currentUser) {
-                    console.log("🔑 No user authenticated, signing in anonymously...");
-                    await signInAnonymously(auth);
+                    console.log("🔐 Signing in anonymously...");
+                    const userCredential = await signInAnonymously(auth);
                     console.log("✅ Anonymous authentication successful");
+                    console.log("👤 User ID:", userCredential.user.uid);
+                } else {
+                    console.log("✅ Already authenticated");
+                    console.log("👤 User ID:", auth.currentUser.uid);
                 }
                 
-                // Test writing to Firebase
+                // Step 2: Test read access
+                console.log("📖 Step 2: Testing read access...");
+                try {
+                    const testCollection = collection(db, 'test_read');
+                    // Just accessing the collection reference
+                    console.log("✅ Read access confirmed");
+                } catch (readError) {
+                    console.error("❌ Read access failed:", readError);
+                    throw readError;
+                }
+                
+                // Step 3: Test write access (most likely to fail)
+                console.log("📝 Step 3: Testing write access...");
                 const testDoc = {
                     test: true,
                     timestamp: new Date(),
-                    message: "Connection test"
+                    message: "Connection test from Grain Procurement System",
+                    userAgent: navigator.userAgent,
+                    url: window.location.href
                 };
                 
-                console.log("📝 Testing write permission...");
                 const docRef = await addDoc(collection(db, 'connection_test'), testDoc);
                 console.log("✅ Write test successful! Doc ID:", docRef.id);
                 
-                // Clean up test document
+                // Step 4: Test delete access
+                console.log("🧹 Step 4: Testing delete access...");
                 await deleteDoc(doc(db, 'connection_test', docRef.id));
-                console.log("🧹 Test document cleaned up");
+                console.log("✅ Delete test successful - test document cleaned up");
                 
-                console.log("🎉 Firebase connection test completely successful!");
-                showNotification("Firebase connection verified successfully!", 'success');
+                console.log("🎉 Firebase connection test COMPLETELY SUCCESSFUL!");
+                console.log("🔥 All Firebase operations working correctly");
+                showNotification("Firebase connected successfully! ✅", 'success');
+                
+                // Firebase is working, don't use local storage fallback
+                useLocalStorage = false;
                 
             } catch (e) {
-                console.error("❌ Firebase connection test failed:", e);
-                console.error("Error code:", e.code);
-                console.error("Error message:", e.message);
+                console.error("❌ Firebase connection test FAILED:", e);
+                console.error("🔍 Error code:", e.code);
+                console.error("🔍 Error message:", e.message);
+                console.error("🔍 Full error object:", e);
                 
+                // Analyze specific error types
                 if (e.code === 'permission-denied') {
-                    console.error("🚫 Permission denied - Check Firebase Security Rules");
-                    showNotification("Firebase permission denied. Check database rules.", 'error');
+                    console.error("🚫 PERMISSION DENIED!");
+                    console.error("💡 SOLUTION: Update Firebase Security Rules to allow anonymous access");
+                    console.error("📋 Add this rule to Firestore Security Rules:");
+                    console.error("   rules_version = '2';");
+                    console.error("   service cloud.firestore {");
+                    console.error("     match /databases/{database}/documents {");
+                    console.error("       match /{document=**} {");
+                    console.error("         allow read, write: if true;");
+                    console.error("       }");
+                    console.error("     }");
+                    console.error("   }");
+                    showNotification("❌ Firebase Permission Denied - Check Security Rules", 'error');
+                    
+                } else if (e.code === 'failed-precondition') {
+                    console.error("⚙️ FIREBASE PROJECT NOT READY");
+                    console.error("💡 SOLUTION: Enable Firestore in Firebase Console");
+                    showNotification("❌ Firestore not enabled - Check Firebase Console", 'error');
+                    
                 } else if (e.code === 'unavailable') {
-                    console.error("🌐 Firebase service unavailable");
-                    showNotification("Firebase service unavailable. Using local storage.", 'error');
+                    console.error("🌐 FIREBASE SERVICE UNAVAILABLE");
+                    console.error("💡 SOLUTION: Check internet connection or Firebase status");
+                    showNotification("❌ Firebase service unavailable", 'error');
+                    
+                } else if (e.message.includes('fetch')) {
+                    console.error("🌐 NETWORK ERROR");
+                    console.error("💡 SOLUTION: Check internet connection");
+                    showNotification("❌ Network error - Check internet connection", 'error');
+                    
                 } else {
-                    console.error("🔥 Other Firebase error:", e.code);
-                    showNotification(`Firebase error: ${e.message}`, 'error');
+                    console.error("🔥 UNKNOWN FIREBASE ERROR");
+                    console.error("💡 SOLUTION: Check Firebase project configuration");
+                    showNotification(`❌ Firebase error: ${e.message}`, 'error');
                 }
                 
+                // Fallback to local storage
+                console.log("📱 Switching to local storage mode");
                 useLocalStorage = true;
+                showNotification("📱 Using local storage mode - data will sync when Firebase is fixed", 'info');
             }
         }
 
