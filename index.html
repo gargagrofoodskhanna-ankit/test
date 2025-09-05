@@ -559,7 +559,14 @@
                 // Fallback to local storage
                 console.log("📱 Switching to local storage mode");
                 useLocalStorage = true;
-                showNotification("📱 Using local storage mode - data will sync when Firebase is fixed", 'info');
+                showNotification("📱 Working in OFFLINE mode - check console for Firebase connection details", 'info');
+                
+                // Update status message to show offline mode
+                if (statusMessage) {
+                    statusMessage.textContent = "System Ready (OFFLINE MODE)";
+                    statusMessage.classList.remove('bg-green-200', 'text-green-800');
+                    statusMessage.classList.add('bg-orange-200', 'text-orange-800');
+                }
             }
         }
 
