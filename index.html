@@ -355,22 +355,36 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        console.log("🔄 Loading Firebase SDKs...");
+        
+        try {
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+            const { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+            const { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setLogLevel } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            
+            console.log("✅ Firebase SDKs loaded successfully");
+            window.firebaseLoaded = true;
 
-        // Firebase Initialization
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // Firebase Initialization - Fixed Configuration
+        const appId = 'grain-procurement-system';
+        const firebaseConfig = {
             apiKey: "AIzaSyBFYB0khRLf_uhqEUBK9nLPaX1T5OoicgE",
-  authDomain: "fir-57151.firebaseapp.com",
-  projectId: "fir-57151",
-  storageBucket: "fir-57151.firebasestorage.app",
-  messagingSenderId: "306225912090",
-  appId: "1:306225912090:web:af5fca28357dad06ff74a3",
-  measurementId: "G-G7BLSR4PFS"
-
+            authDomain: "fir-57151.firebaseapp.com",
+            projectId: "fir-57151",
+            storageBucket: "fir-57151.firebasestorage.app",
+            messagingSenderId: "306225912090",
+            appId: "1:306225912090:web:af5fca28357dad06ff74a3",
+            measurementId: "G-G7BLSR4PFS"
         };
+
+        // Validate Firebase configuration
+        console.log("🔧 Firebase Configuration Check:");
+        console.log("API Key:", firebaseConfig.apiKey ? "✅ Present" : "❌ Missing");
+        console.log("Auth Domain:", firebaseConfig.authDomain ? "✅ Present" : "❌ Missing");
+        console.log("Project ID:", firebaseConfig.projectId ? "✅ Present" : "❌ Missing");
+        console.log("Storage Bucket:", firebaseConfig.storageBucket ? "✅ Present" : "❌ Missing");
+        console.log("Messaging Sender ID:", firebaseConfig.messagingSenderId ? "✅ Present" : "❌ Missing");
+        console.log("App ID:", firebaseConfig.appId ? "✅ Present" : "❌ Missing");
 
         let app;
         let auth;
@@ -388,35 +402,61 @@
             'user2': { password: 'user123', role: 'user2', name: 'User 2' }
         };
 
-        try {
-            if (Object.keys(firebaseConfig).length > 0) {
-                console.log("🔧 Initializing Firebase...");
-                console.log("Config:", firebaseConfig);
-                
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                setLogLevel('Error'); // Reduce logging to avoid performance issues
-                
-                console.log("✅ Firebase initialized successfully");
+        // Check if all required Firebase config fields are present
+        const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
+        const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+        
+        if (missingFields.length > 0) {
+            console.error("❌ Firebase configuration incomplete!");
+            console.error("Missing fields:", missingFields);
+            showNotification("Firebase configuration incomplete. Using local storage only.", 'error');
+            useLocalStorage = true;
+        } else {
+            try {
+                console.log("🔧 Initializing Firebase with complete configuration...");
                 console.log("📍 Project ID:", firebaseConfig.projectId);
                 console.log("🌐 Auth Domain:", firebaseConfig.authDomain);
+                
+                // Initialize Firebase
+                app = initializeApp(firebaseConfig);
+                console.log("✅ Firebase app initialized");
+                
+                auth = getAuth(app);
+                console.log("✅ Firebase Auth initialized");
+                
+                db = getFirestore(app);
+                console.log("✅ Firestore initialized");
+                
+                setLogLevel('error'); // Reduce logging noise
+                
+                console.log("🎉 All Firebase services initialized successfully!");
                 
                 // Test Firebase connection with delay to ensure initialization
                 setTimeout(() => {
                     testFirebaseConnection();
-                }, 1000);
+                }, 1500); // Increased delay for better reliability
                 
-            } else {
-                console.error("❌ Firebase config is missing. Please check the environment variables.");
-                showNotification("Firebase configuration missing.", 'error');
+            } catch (e) {
+                console.error("❌ Firebase initialization failed:", e);
+                console.error("Error type:", e.name);
+                console.error("Error message:", e.message);
+                console.error("Error stack:", e.stack);
+                
+                if (e.message.includes('app/duplicate-app')) {
+                    console.error("🔄 Duplicate app error - trying to reinitialize");
+                    showNotification("Firebase app already initialized", 'info');
+                } else if (e.message.includes('auth/api-key-not-valid')) {
+                    console.error("🔑 Invalid API key");
+                    showNotification("Invalid Firebase API key", 'error');
+                } else if (e.message.includes('network')) {
+                    console.error("🌐 Network connectivity issue");
+                    showNotification("Network error during Firebase initialization", 'error');
+                } else {
+                    showNotification(`Firebase initialization error: ${e.message}`, 'error');
+                }
+                
                 useLocalStorage = true;
             }
-        } catch (e) {
-            console.error("❌ Error initializing Firebase:", e);
-            console.error("Error details:", e.message);
-            showNotification("Firebase initialization failed. Using local storage only.", 'error');
-            useLocalStorage = true;
         }
 
         // Test Firebase connection
@@ -1537,6 +1577,27 @@
         window.onload = () => {
             showLoginModal();
         };
+        
+        } catch (sdkError) {
+            console.error("❌ Failed to load Firebase SDKs:", sdkError);
+            console.error("This could be due to:");
+            console.error("1. Network connectivity issues");
+            console.error("2. Firewall blocking Firebase CDN");
+            console.error("3. Ad blockers interfering");
+            
+            // Show user-friendly error and enable local storage mode
+            setTimeout(() => {
+                if (window.showNotification) {
+                    showNotification("Failed to load Firebase. Using offline mode only.", 'error');
+                }
+                useLocalStorage = true;
+                
+                // Initialize basic app functionality without Firebase
+                if (window.showLoginModal) {
+                    showLoginModal();
+                }
+            }, 1000);
+        }
     </script>
 </body>
 </html>
