@@ -127,6 +127,26 @@
             <div id="statusMessage" class="text-center p-2 rounded-lg mb-4 text-sm font-semibold text-gray-700 bg-gray-200">
                 Connecting to system...
             </div>
+
+            <!-- Success/Error Notification -->
+            <div id="notification" class="hidden fixed top-4 right-4 z-50 max-w-sm">
+                <div class="bg-white rounded-lg shadow-lg border-l-4 p-4">
+                    <div class="flex items-center">
+                        <div id="notificationIcon" class="flex-shrink-0">
+                            <!-- Icon will be added by JavaScript -->
+                        </div>
+                        <div class="ml-3">
+                            <p id="notificationMessage" class="text-sm font-medium text-gray-900"></p>
+                        </div>
+                        <button id="closeNotification" class="ml-auto pl-3">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <!-- User Info Display -->
             <div class="bg-gray-100 rounded-lg p-3 text-center mb-6 shadow-inner">
                 <span class="text-xs font-semibold text-gray-600">Your User ID:</span>
@@ -187,9 +207,16 @@
                                 class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
                         </div>
                     </div>
-                    <button type="submit"
+                    <button type="submit" id="saveGatePassBtn"
                             class="w-full p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md mt-2">
-                        Add Gate Pass
+                        <span id="saveBtnText">Save Gate Pass</span>
+                        <span id="saveBtnSpinner" class="hidden">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                        </span>
                     </button>
                 </form>
 
@@ -387,6 +414,13 @@
         const supplierDropdownList = document.getElementById('supplierDropdownList');
         const gatepassTypeSelect = document.getElementById('gatepassTypeSelect');
         const inventoryReport = document.getElementById('inventoryReport');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notificationIcon = document.getElementById('notificationIcon');
+        const closeNotification = document.getElementById('closeNotification');
+        const saveGatePassBtn = document.getElementById('saveGatePassBtn');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveBtnSpinner = document.getElementById('saveBtnSpinner');
         let allSuppliers = [];
 
         const editModal = document.getElementById('editModal');
@@ -401,6 +435,63 @@
         const editOwnWeightInput = document.getElementById('editOwnWeight');
         const editGatepassTypeSelect = document.getElementById('editGatepassTypeSelect');
         const cancelEditButton = document.getElementById('cancelEditButton');
+
+        // Notification Functions
+        function showNotification(message, type = 'success') {
+            notificationMessage.textContent = message;
+            notificationIcon.innerHTML = '';
+            
+            if (type === 'success') {
+                notification.className = 'fixed top-4 right-4 z-50 max-w-sm';
+                notification.querySelector('.bg-white').className = 'bg-white rounded-lg shadow-lg border-l-4 border-green-400 p-4';
+                notificationIcon.innerHTML = `
+                    <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                `;
+            } else if (type === 'error') {
+                notification.className = 'fixed top-4 right-4 z-50 max-w-sm';
+                notification.querySelector('.bg-white').className = 'bg-white rounded-lg shadow-lg border-l-4 border-red-400 p-4';
+                notificationIcon.innerHTML = `
+                    <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                `;
+            } else if (type === 'info') {
+                notification.className = 'fixed top-4 right-4 z-50 max-w-sm';
+                notification.querySelector('.bg-white').className = 'bg-white rounded-lg shadow-lg border-l-4 border-blue-400 p-4';
+                notificationIcon.innerHTML = `
+                    <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                `;
+            }
+            
+            notification.classList.remove('hidden');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                hideNotification();
+            }, 5000);
+        }
+
+        function hideNotification() {
+            notification.classList.add('hidden');
+        }
+
+        function setSaveButtonLoading(loading) {
+            if (loading) {
+                saveBtnText.classList.add('hidden');
+                saveBtnSpinner.classList.remove('hidden');
+                saveGatePassBtn.disabled = true;
+                saveGatePassBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                saveBtnText.classList.remove('hidden');
+                saveBtnSpinner.classList.add('hidden');
+                saveGatePassBtn.disabled = false;
+                saveGatePassBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
 
         // Authentication Functions
         function showLoginModal() {
@@ -556,8 +647,14 @@
                 console.log("Gate passes loaded:", allGatePasses);
                 renderGatePasses(allGatePasses);
                 calculateAndRenderInventory(allGatePasses);
+                
+                // Show data loaded notification
+                if (allGatePasses.length > 0) {
+                    showNotification(`${allGatePasses.length} gate passes loaded from database`, 'info');
+                }
             }, (error) => {
                 console.error("Error fetching gate pass data:", error);
+                showNotification("Error loading data from database", 'error');
             });
         }
         
@@ -778,10 +875,17 @@
         // Add gate pass to Firestore
         async function addGatePass(event) {
             event.preventDefault();
+            
             if (!userAuthReady || !db) {
                 console.error("User not authenticated or database not ready.");
+                showNotification("System not ready. Please try again.", 'error');
                 return;
             }
+
+            // Show loading state
+            setSaveButtonLoading(true);
+            showNotification("Saving gate pass...", 'info');
+
             const type = gatepassTypeSelect.value;
             const item = document.getElementById('itemSelect').value;
             const purchasedFrom = supplierSearchInput.value;
@@ -790,19 +894,27 @@
             const partyWeight = parseInt(document.getElementById('partyWeight').value, 10);
             const ownWeight = parseInt(document.getElementById('ownWeight').value, 10);
 
-            // Check if the supplier is new and add it to the database
-            const supplierExists = allSuppliers.some(s => s === purchasedFrom);
-            if (!supplierExists) {
-                try {
-                    await addDoc(collection(db, 'suppliers'), { name: purchasedFrom });
-                    console.log("New supplier added:", purchasedFrom);
-                } catch (e) {
-                    console.error("Error adding new supplier:", e);
-                    return;
-                }
-            }
-
             try {
+                // Check if the supplier is new and add it to the database
+                const supplierExists = allSuppliers.some(s => s === purchasedFrom);
+                if (!supplierExists) {
+                    try {
+                        await addDoc(collection(db, 'suppliers'), { 
+                            name: purchasedFrom,
+                            createdAt: new Date(),
+                            createdBy: userId
+                        });
+                        console.log("New supplier added:", purchasedFrom);
+                        showNotification(`New supplier "${purchasedFrom}" added successfully!`, 'success');
+                    } catch (e) {
+                        console.error("Error adding new supplier:", e);
+                        showNotification("Error adding supplier. Please try again.", 'error');
+                        setSaveButtonLoading(false);
+                        return;
+                    }
+                }
+
+                // Add the gate pass
                 const docRef = await addDoc(collection(db, 'gate_passes'), {
                     type,
                     item,
@@ -813,14 +925,29 @@
                     ownWeight,
                     createdAt: new Date(),
                     userId: userId,
-                    userRole: userRole
+                    userRole: userRole,
+                    status: 'active'
                 });
+                
                 console.log("Gate pass added with ID:", docRef.id);
+                
+                // Reset form
                 addGatePassForm.reset();
                 supplierDropdownList.classList.add('hidden');
+                
+                // Show success message
+                showNotification(`Gate pass saved successfully! (ID: ${docRef.id.substring(0, 8)}...)`, 'success');
+                
+                // Update admin stats if visible
+                if (adminView && !adminView.classList.contains('hidden')) {
+                    updateAdminStats();
+                }
+                
             } catch (e) {
                 console.error("Error adding document:", e);
-                alert("Error saving gate pass. Please try again.");
+                showNotification(`Error saving gate pass: ${e.message}`, 'error');
+            } finally {
+                setSaveButtonLoading(false);
             }
         }
 
@@ -1005,6 +1132,7 @@
         addGatePassForm.addEventListener('submit', addGatePass);
         editForm.addEventListener('submit', saveEdit);
         cancelEditButton.addEventListener('click', hideEditModal);
+        closeNotification.addEventListener('click', hideNotification);
         recordViewBtn.addEventListener('click', () => toggleView('record'));
         reportsViewBtn.addEventListener('click', () => toggleView('reports'));
         adminViewBtn.addEventListener('click', () => toggleView('admin'));
