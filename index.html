@@ -357,6 +357,8 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
                 setLogLevel('Debug');
+                console.log("Firebase initialized successfully");
+                console.log("Project ID:", firebaseConfig.projectId);
             } else {
                 console.error("Firebase config is missing. Please check the environment variables.");
             }
@@ -534,22 +536,24 @@
             }
 
             // Listener for Suppliers
-            const suppliersRef = collection(db, `artifacts/${appId}/public/data/suppliers`);
+            const suppliersRef = collection(db, 'suppliers');
             onSnapshot(suppliersRef, (snapshot) => {
                 allSuppliers = [];
                 snapshot.forEach(doc => allSuppliers.push(doc.data().name));
+                console.log("Suppliers loaded:", allSuppliers);
             }, (error) => {
                 console.error("Error fetching suppliers:", error);
             });
 
             // Listener for Gate Passes
-            const gatePassesRef = collection(db, `artifacts/${appId}/public/data/gate_passes`);
+            const gatePassesRef = collection(db, 'gate_passes');
             onSnapshot(gatePassesRef, (snapshot) => {
                 allGatePasses = [];
                 snapshot.forEach((doc) => {
                     const gatePass = { id: doc.id, ...doc.data() };
                     allGatePasses.push(gatePass);
                 });
+                console.log("Gate passes loaded:", allGatePasses);
                 renderGatePasses(allGatePasses);
                 calculateAndRenderInventory(allGatePasses);
             }, (error) => {
@@ -790,7 +794,8 @@
             const supplierExists = allSuppliers.some(s => s === purchasedFrom);
             if (!supplierExists) {
                 try {
-                    await addDoc(collection(db, `artifacts/${appId}/public/data/suppliers`), { name: purchasedFrom });
+                    await addDoc(collection(db, 'suppliers'), { name: purchasedFrom });
+                    console.log("New supplier added:", purchasedFrom);
                 } catch (e) {
                     console.error("Error adding new supplier:", e);
                     return;
@@ -798,7 +803,7 @@
             }
 
             try {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/gate_passes`), {
+                const docRef = await addDoc(collection(db, 'gate_passes'), {
                     type,
                     item,
                     purchasedFrom,
@@ -806,12 +811,16 @@
                     date,
                     partyWeight,
                     ownWeight,
-                    createdAt: new Date()
+                    createdAt: new Date(),
+                    userId: userId,
+                    userRole: userRole
                 });
+                console.log("Gate pass added with ID:", docRef.id);
                 addGatePassForm.reset();
                 supplierDropdownList.classList.add('hidden');
             } catch (e) {
                 console.error("Error adding document:", e);
+                alert("Error saving gate pass. Please try again.");
             }
         }
 
@@ -836,7 +845,8 @@
             const supplierExists = allSuppliers.some(s => s === purchasedFrom);
             if (!supplierExists) {
                 try {
-                    await addDoc(collection(db, `artifacts/${appId}/public/data/suppliers`), { name: purchasedFrom });
+                    await addDoc(collection(db, 'suppliers'), { name: purchasedFrom });
+                    console.log("New supplier added:", purchasedFrom);
                 } catch (e) {
                     console.error("Error adding new supplier:", e);
                     return;
@@ -844,7 +854,7 @@
             }
 
             try {
-                const gatePassRef = doc(db, `artifacts/${appId}/public/data/gate_passes`, docId);
+                const gatePassRef = doc(db, 'gate_passes', docId);
                 await updateDoc(gatePassRef, {
                     type,
                     item,
@@ -853,11 +863,15 @@
                     date,
                     partyWeight,
                     ownWeight,
+                    updatedAt: new Date(),
+                    updatedBy: userId
                 });
+                console.log("Gate pass updated:", docId);
                 hideEditModal();
                 editSupplierDropdownList.classList.add('hidden');
             } catch (e) {
                 console.error("Error updating document:", e);
+                alert("Error updating gate pass. Please try again.");
             }
         }
 
@@ -868,9 +882,11 @@
                 return;
             }
             try {
-                await deleteDoc(doc(db, `artifacts/${appId}/public/data/gate_passes`, docId));
+                await deleteDoc(doc(db, 'gate_passes', docId));
+                console.log("Gate pass deleted:", docId);
             } catch (e) {
                 console.error("Error deleting document:", e);
+                alert("Error deleting gate pass. Please try again.");
             }
         }
         
