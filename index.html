@@ -685,43 +685,88 @@
             }
         }
 
-        // Real-time listeners for all data
+        // Load data from local storage and optionally sync with Firebase
         function startRealtimeListeners() {
-            if (!userAuthReady || !db) {
-                console.error("Authentication not ready or db not initialized.");
-                return;
-            }
+            console.log("🔄 Starting data listeners...");
+            
+            // Load data from local storage immediately
+            loadLocalData();
+            
+            // If Firebase is available, also listen for real-time updates
+            if (userAuthReady && db) {
+                try {
+                    // Listener for Suppliers
+                    const suppliersRef = collection(db, 'suppliers');
+                    onSnapshot(suppliersRef, (snapshot) => {
+                        const firebaseSuppliers = [];
+                        snapshot.forEach(doc => firebaseSuppliers.push(doc.data().name));
+                        
+                        // Merge with local suppliers (avoid duplicates)
+                        const localSuppliers = loadFromLocalStorage('suppliers').map(s => s.name);
+                        allSuppliers = [...new Set([...firebaseSuppliers, ...localSuppliers])];
+                        console.log("Suppliers loaded (Firebase + Local):", allSuppliers);
+                    }, (error) => {
+                        console.error("Error fetching suppliers from Firebase:", error);
+                        console.log("Using local suppliers only");
+                    });
 
-            // Listener for Suppliers
-            const suppliersRef = collection(db, 'suppliers');
-            onSnapshot(suppliersRef, (snapshot) => {
-                allSuppliers = [];
-                snapshot.forEach(doc => allSuppliers.push(doc.data().name));
-                console.log("Suppliers loaded:", allSuppliers);
-            }, (error) => {
-                console.error("Error fetching suppliers:", error);
-            });
-
-            // Listener for Gate Passes
-            const gatePassesRef = collection(db, 'gate_passes');
-            onSnapshot(gatePassesRef, (snapshot) => {
-                allGatePasses = [];
-                snapshot.forEach((doc) => {
-                    const gatePass = { id: doc.id, ...doc.data() };
-                    allGatePasses.push(gatePass);
-                });
-                console.log("Gate passes loaded:", allGatePasses);
-                renderGatePasses(allGatePasses);
-                calculateAndRenderInventory(allGatePasses);
-                
-                // Show data loaded notification
-                if (allGatePasses.length > 0) {
-                    showNotification(`${allGatePasses.length} gate passes loaded from database`, 'info');
+                    // Listener for Gate Passes
+                    const gatePassesRef = collection(db, 'gate_passes');
+                    onSnapshot(gatePassesRef, (snapshot) => {
+                        const firebaseGatePasses = [];
+                        snapshot.forEach((doc) => {
+                            const gatePass = { id: doc.id, ...doc.data() };
+                            firebaseGatePasses.push(gatePass);
+                        });
+                        
+                        // Merge with local gate passes (prioritize Firebase for synced items)
+                        const localGatePasses = loadFromLocalStorage('gate_passes');
+                        const unsyncedLocal = localGatePasses.filter(item => !item.savedToFirebase);
+                        
+                        allGatePasses = [...firebaseGatePasses, ...unsyncedLocal];
+                        console.log("Gate passes loaded (Firebase + Local):", allGatePasses.length);
+                        renderGatePasses(allGatePasses);
+                        calculateAndRenderInventory(allGatePasses);
+                        
+                        if (allGatePasses.length > 0) {
+                            showNotification(`${allGatePasses.length} gate passes loaded`, 'info');
+                        }
+                    }, (error) => {
+                        console.error("Error fetching gate pass data from Firebase:", error);
+                        console.log("Using local data only");
+                        showNotification("Using local data only - will sync when connection improves", 'info');
+                    });
+                } catch (error) {
+                    console.error("Error setting up Firebase listeners:", error);
+                    console.log("Using local data only");
                 }
-            }, (error) => {
-                console.error("Error fetching gate pass data:", error);
-                showNotification("Error loading data from database", 'error');
-            });
+            } else {
+                console.log("Using local data only (Firebase not available)");
+                showNotification("Working offline - data saved locally", 'info');
+            }
+        }
+
+        // Load data from local storage
+        function loadLocalData() {
+            console.log("📱 Loading local data...");
+            
+            // Load suppliers
+            const localSuppliers = loadFromLocalStorage('suppliers');
+            allSuppliers = localSuppliers.map(s => s.name);
+            console.log("Local suppliers loaded:", allSuppliers);
+            
+            // Load gate passes
+            const localGatePasses = loadFromLocalStorage('gate_passes');
+            allGatePasses = localGatePasses;
+            console.log("Local gate passes loaded:", allGatePasses.length);
+            
+            // Update UI
+            renderGatePasses(allGatePasses);
+            calculateAndRenderInventory(allGatePasses);
+            
+            if (allGatePasses.length > 0) {
+                showNotification(`${allGatePasses.length} gate passes loaded from local storage`, 'success');
+            }
         }
         
         // Function to render gate passes based on a given array
@@ -938,20 +983,20 @@
             editModal.style.display = 'none';
         }
 
-        // Add gate pass to Firestore with timeout
+        // Simplified and reliable save function
         async function addGatePass(event) {
             event.preventDefault();
             
-            if (!userAuthReady || !db) {
-                console.error("User not authenticated or database not ready.");
-                showNotification("System not ready. Please try again.", 'error');
-                return;
-            }
+            console.log("=== SAVE GATE PASS STARTED ===");
+            console.log("userAuthReady:", userAuthReady);
+            console.log("db initialized:", !!db);
+            console.log("currentUser:", currentUser);
 
             // Show loading state
             setSaveButtonLoading(true);
             showNotification("Saving gate pass...", 'info');
 
+            // Get form data
             const type = gatepassTypeSelect.value;
             const item = document.getElementById('itemSelect').value;
             const purchasedFrom = supplierSearchInput.value;
@@ -960,137 +1005,119 @@
             const partyWeight = parseInt(document.getElementById('partyWeight').value, 10);
             const ownWeight = parseInt(document.getElementById('ownWeight').value, 10);
 
-            // Create timeout promise
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Save operation timed out after 10 seconds')), 10000);
-            });
+            console.log("Form data:", { type, item, purchasedFrom, truckNumber, date, partyWeight, ownWeight });
 
+            // Always save to local storage first (immediate backup)
+            const gatePassData = {
+                id: Date.now().toString(),
+                type,
+                item,
+                purchasedFrom,
+                truckNumber,
+                date,
+                partyWeight,
+                ownWeight,
+                userId: userId || 'anonymous',
+                userRole: userRole || 'user',
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                savedToFirebase: false
+            };
+
+            // Save to local storage immediately
             try {
-                // Check if the supplier is new and add it to the database
+                const localData = loadFromLocalStorage('gate_passes');
+                localData.push(gatePassData);
+                saveToLocalStorage('gate_passes', localData);
+                console.log("✅ Saved to local storage successfully");
+                
+                // Also save supplier locally if new
                 const supplierExists = allSuppliers.some(s => s === purchasedFrom);
                 if (!supplierExists) {
-                    if (useLocalStorage) {
-                        // Use local storage fallback
-                        if (addSupplierToLocal(purchasedFrom)) {
-                            console.log("New supplier added to local storage:", purchasedFrom);
-                            showNotification(`New supplier "${purchasedFrom}" added successfully!`, 'success');
-                        } else {
-                            showNotification("Error adding supplier to local storage.", 'error');
-                            setSaveButtonLoading(false);
-                            return;
-                        }
-                    } else {
-                        try {
-                            const supplierPromise = addDoc(collection(db, 'suppliers'), { 
-                                name: purchasedFrom,
-                                createdAt: new Date(),
-                                createdBy: userId
-                            });
-                            
-                            await Promise.race([supplierPromise, timeoutPromise]);
-                            console.log("New supplier added:", purchasedFrom);
-                            showNotification(`New supplier "${purchasedFrom}" added successfully!`, 'success');
-                        } catch (e) {
-                            console.error("Error adding new supplier:", e);
-                            if (e.message.includes('timed out')) {
-                                showNotification("Save timed out. Switching to local storage.", 'error');
-                                useLocalStorage = true;
-                                if (addSupplierToLocal(purchasedFrom)) {
-                                    showNotification(`New supplier "${purchasedFrom}" saved locally!`, 'success');
-                                }
-                            } else {
-                                showNotification("Error adding supplier. Please try again.", 'error');
-                            }
-                            setSaveButtonLoading(false);
-                            return;
-                        }
+                    const localSuppliers = loadFromLocalStorage('suppliers');
+                    if (!localSuppliers.some(s => s.name === purchasedFrom)) {
+                        localSuppliers.push({
+                            id: Date.now().toString(),
+                            name: purchasedFrom,
+                            createdAt: new Date().toISOString()
+                        });
+                        saveToLocalStorage('suppliers', localSuppliers);
+                        allSuppliers.push(purchasedFrom);
                     }
-                }
-
-                // Add the gate pass
-                if (useLocalStorage) {
-                    // Use local storage fallback
-                    const gatePassData = {
-                        type,
-                        item,
-                        purchasedFrom,
-                        truckNumber,
-                        date,
-                        partyWeight,
-                        ownWeight,
-                        userId: userId,
-                        userRole: userRole,
-                        status: 'active'
-                    };
-                    
-                    if (addGatePassToLocal(gatePassData)) {
-                        console.log("Gate pass added to local storage");
-                        showNotification("Gate pass saved locally! (Data will sync when connection is restored)", 'success');
-                    } else {
-                        showNotification("Error saving gate pass to local storage.", 'error');
-                    }
-                } else {
-                    // Use Firebase
-                    const gatePassPromise = addDoc(collection(db, 'gate_passes'), {
-                        type,
-                        item,
-                        purchasedFrom,
-                        truckNumber,
-                        date,
-                        partyWeight,
-                        ownWeight,
-                        createdAt: new Date(),
-                        userId: userId,
-                        userRole: userRole,
-                        status: 'active'
-                    });
-                    
-                    const docRef = await Promise.race([gatePassPromise, timeoutPromise]);
-                    console.log("Gate pass added with ID:", docRef.id);
-                    showNotification(`Gate pass saved successfully! (ID: ${docRef.id.substring(0, 8)}...)`, 'success');
                 }
                 
-                // Reset form
+                // Update UI immediately with local data
+                allGatePasses.push(gatePassData);
+                renderGatePasses(allGatePasses);
+                calculateAndRenderInventory(allGatePasses);
+                
+                // Reset form immediately
                 addGatePassForm.reset();
                 supplierDropdownList.classList.add('hidden');
-                
-                // Update admin stats if visible
-                if (adminView && !adminView.classList.contains('hidden')) {
-                    updateAdminStats();
-                }
-                
-            } catch (e) {
-                console.error("Error adding document:", e);
-                if (e.message.includes('timed out')) {
-                    showNotification("Save operation timed out. Switching to local storage.", 'error');
-                    useLocalStorage = true;
-                    // Try to save locally as fallback
-                    const gatePassData = {
-                        type,
-                        item,
-                        purchasedFrom,
-                        truckNumber,
-                        date,
-                        partyWeight,
-                        ownWeight,
-                        userId: userId,
-                        userRole: userRole,
-                        status: 'active'
-                    };
-                    if (addGatePassToLocal(gatePassData)) {
-                        showNotification("Gate pass saved locally! (Data will sync when connection is restored)", 'success');
-                        addGatePassForm.reset();
-                        supplierDropdownList.classList.add('hidden');
-                    }
-                } else if (e.code === 'unavailable') {
-                    showNotification("Database is temporarily unavailable. Please try again in a moment.", 'error');
-                } else if (e.code === 'permission-denied') {
-                    showNotification("Permission denied. Please check your user role.", 'error');
-                } else {
-                    showNotification(`Error saving gate pass: ${e.message}`, 'error');
-                }
-            } finally {
                 setSaveButtonLoading(false);
+                
+                showNotification("Gate pass saved successfully!", 'success');
+                console.log("=== SAVE COMPLETED SUCCESSFULLY ===");
+                
+                // Try to sync to Firebase in background (optional)
+                if (db && userAuthReady) {
+                    syncToFirebaseInBackground(gatePassData, purchasedFrom);
+                }
+                
+            } catch (error) {
+                console.error("Error saving gate pass:", error);
+                showNotification("Error saving gate pass. Please try again.", 'error');
+                setSaveButtonLoading(false);
+            }
+        }
+
+        // Background sync to Firebase (non-blocking)
+        async function syncToFirebaseInBackground(gatePassData, supplierName) {
+            try {
+                console.log("🔄 Attempting background sync to Firebase...");
+                
+                // Add supplier if new
+                const supplierExists = allSuppliers.some(s => s === supplierName);
+                if (!supplierExists) {
+                    await addDoc(collection(db, 'suppliers'), { 
+                        name: supplierName,
+                        createdAt: new Date(),
+                        createdBy: userId
+                    });
+                    console.log("✅ Supplier synced to Firebase");
+                }
+
+                // Add gate pass
+                const docRef = await addDoc(collection(db, 'gate_passes'), {
+                    type: gatePassData.type,
+                    item: gatePassData.item,
+                    purchasedFrom: gatePassData.purchasedFrom,
+                    truckNumber: gatePassData.truckNumber,
+                    date: gatePassData.date,
+                    partyWeight: gatePassData.partyWeight,
+                    ownWeight: gatePassData.ownWeight,
+                    createdAt: new Date(),
+                    userId: gatePassData.userId,
+                    userRole: gatePassData.userRole,
+                    status: 'active'
+                });
+                
+                console.log("✅ Gate pass synced to Firebase with ID:", docRef.id);
+                
+                // Update local storage to mark as synced
+                const localData = loadFromLocalStorage('gate_passes');
+                const item = localData.find(item => item.id === gatePassData.id);
+                if (item) {
+                    item.savedToFirebase = true;
+                    item.firebaseId = docRef.id;
+                    saveToLocalStorage('gate_passes', localData);
+                }
+                
+                showNotification("Data synced to cloud successfully!", 'success');
+                
+            } catch (error) {
+                console.error("Background sync to Firebase failed:", error);
+                console.log("Data remains saved locally and will sync when connection improves");
             }
         }
 
