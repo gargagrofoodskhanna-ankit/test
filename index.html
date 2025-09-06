@@ -99,14 +99,6 @@
                     Login
                 </button>
             </form>
-            <div class="mt-4 text-center">
-                <p class="text-sm text-gray-600">Demo Users:</p>
-                <div class="mt-2 space-y-1 text-xs">
-                    <p><strong>Admin:</strong> admin / admin123</p>
-                    <p><strong>User 1:</strong> user1 / user123</p>
-                    <p><strong>User 2:</strong> user2 / user123</p>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -357,7 +349,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         console.log("✅ Firebase SDKs loaded successfully");
 
@@ -784,6 +776,13 @@
                 adminViewBtn.classList.add('hidden');
             }
 
+            // Show/hide reports button based on role (only admin can see reports)
+            if (userRole === 'admin') {
+                reportsViewBtn.classList.remove('hidden');
+            } else {
+                reportsViewBtn.classList.add('hidden');
+            }
+
             // Update form permissions based on role
             updateFormPermissions();
         }
@@ -906,7 +905,27 @@
                         const localGatePasses = loadFromLocalStorage('gate_passes');
                         const unsyncedLocal = localGatePasses.filter(item => !item.savedToFirebase);
                         
-                        allGatePasses = [...firebaseGatePasses, ...unsyncedLocal];
+                        // Create a map to track existing entries and prevent duplicates
+                        const existingIds = new Set();
+                        const mergedGatePasses = [];
+                        
+                        // Add Firebase entries first (they take priority)
+                        firebaseGatePasses.forEach(gatePass => {
+                            if (!existingIds.has(gatePass.id)) {
+                                mergedGatePasses.push(gatePass);
+                                existingIds.add(gatePass.id);
+                            }
+                        });
+                        
+                        // Add unsynced local entries (only if not already in Firebase)
+                        unsyncedLocal.forEach(gatePass => {
+                            if (!existingIds.has(gatePass.id)) {
+                                mergedGatePasses.push(gatePass);
+                                existingIds.add(gatePass.id);
+                            }
+                        });
+                        
+                        allGatePasses = mergedGatePasses;
                         console.log("Gate passes loaded (Firebase + Local):", allGatePasses.length);
                         renderGatePasses(allGatePasses);
                         calculateAndRenderInventory(allGatePasses);
@@ -1167,8 +1186,18 @@
         }
 
         // Simplified and reliable save function
+        let isSaving = false; // Flag to prevent multiple submissions
+        
         async function addGatePass(event) {
             event.preventDefault();
+            
+            // Prevent multiple submissions
+            if (isSaving) {
+                console.log("Already saving, ignoring duplicate submission");
+                return;
+            }
+            
+            isSaving = true;
             
             console.log("=== SAVE GATE PASS STARTED ===");
             console.log("userAuthReady:", userAuthReady);
@@ -1229,10 +1258,13 @@
                     }
                 }
                 
-                // Update UI immediately with local data
-                allGatePasses.push(gatePassData);
-                renderGatePasses(allGatePasses);
-                calculateAndRenderInventory(allGatePasses);
+                // Update UI immediately with local data (check for duplicates first)
+                const existingEntry = allGatePasses.find(item => item.id === gatePassData.id);
+                if (!existingEntry) {
+                    allGatePasses.push(gatePassData);
+                    renderGatePasses(allGatePasses);
+                    calculateAndRenderInventory(allGatePasses);
+                }
                 
                 // Reset form immediately
                 addGatePassForm.reset();
@@ -1250,10 +1282,14 @@
                     syncToFirebaseInBackground(gatePassData, purchasedFrom);
                 }
                 
+                // Reset the saving flag
+                isSaving = false;
+                
             } catch (error) {
                 console.error("Error saving gate pass:", error);
                 showNotification("Error saving gate pass. Please try again.", 'error');
                 setSaveButtonLoading(false);
+                isSaving = false; // Reset flag on error too
             }
         }
 
@@ -1292,8 +1328,8 @@
                 }
 
                 console.log("📤 Syncing gate pass...");
-                // Add gate pass
-                const docRef = await addDoc(collection(db, 'gate_passes'), {
+                // Add gate pass with the same ID as local storage
+                const docRef = await setDoc(doc(db, 'gate_passes', gatePassData.id), {
                     type: gatePassData.type,
                     item: gatePassData.item,
                     purchasedFrom: gatePassData.purchasedFrom,
@@ -1307,14 +1343,14 @@
                     status: 'active'
                 });
                 
-                console.log("✅ Gate pass synced to Firebase with ID:", docRef.id);
+                console.log("✅ Gate pass synced to Firebase with ID:", gatePassData.id);
                 
                 // Update local storage to mark as synced
                 const localData = loadFromLocalStorage('gate_passes');
                 const item = localData.find(item => item.id === gatePassData.id);
                 if (item) {
                     item.savedToFirebase = true;
-                    item.firebaseId = docRef.id;
+                    item.firebaseId = gatePassData.id; // Same ID now
                     saveToLocalStorage('gate_passes', localData);
                     console.log("✅ Local data marked as synced");
                 }
@@ -1552,6 +1588,28 @@
             document.getElementById('totalSuppliers').textContent = allSuppliers.length;
         }
 
+        // Function to remove duplicates from gate passes
+        function removeDuplicateGatePasses() {
+            const uniqueGatePasses = [];
+            const seenIds = new Set();
+            
+            allGatePasses.forEach(gatePass => {
+                if (!seenIds.has(gatePass.id)) {
+                    uniqueGatePasses.push(gatePass);
+                    seenIds.add(gatePass.id);
+                }
+            });
+            
+            if (uniqueGatePasses.length !== allGatePasses.length) {
+                console.log(`Removed ${allGatePasses.length - uniqueGatePasses.length} duplicate gate passes`);
+                allGatePasses.length = 0; // Clear array
+                allGatePasses.push(...uniqueGatePasses); // Add unique entries
+                renderGatePasses(allGatePasses);
+                calculateAndRenderInventory(allGatePasses);
+                showNotification("Duplicate entries removed", 'info');
+            }
+        }
+
         // Attach event listeners
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -1579,6 +1637,10 @@
         // Initialize app
         window.onload = () => {
             showLoginModal();
+            // Clean up any existing duplicates on app load
+            setTimeout(() => {
+                removeDuplicateGatePasses();
+            }, 2000);
         };
     </script>
 </body>
