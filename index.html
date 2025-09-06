@@ -198,18 +198,26 @@
                         </div>
                         <div>
                             <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
-                            <input type="date" id="date" required
-                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                            <div class="relative">
+                                <input type="date" id="date" required
+                                    class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                                <button type="button" id="datePickerBtn" 
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         <div>
-                            <label for="partyWeight" class="block text-sm font-medium text-gray-700">Party Weight ($kg$)</label>
-                            <input type="number" id="partyWeight" placeholder="Party Weight" required
-                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                            <label for="partyWeight" class="block text-sm font-medium text-gray-700">Party Weight (quintal)</label>
+                            <input type="number" id="partyWeight" placeholder="Party Weight" step="0.01" min="0" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         </div>
                         <div>
-                            <label for="ownWeight" class="block text-sm font-medium text-gray-700">Own Weight ($kg$)</label>
-                            <input type="number" id="ownWeight" placeholder="Own Weight" required
-                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                            <label for="ownWeight" class="block text-sm font-medium text-gray-700">Own Weight (quintal)</label>
+                            <input type="number" id="ownWeight" placeholder="Own Weight" step="0.01" min="0" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         </div>
                     </div>
                     <button type="submit" id="saveGatePassBtn"
@@ -227,9 +235,7 @@
 
                 <!-- Gate Pass List -->
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Recent Gate Passes</h2>
-                    <input type="text" id="gatePassSearchInput" placeholder="Search by item, truck, or supplier..."
-                           class="w-full p-3 mb-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4">Last 5 Gate Passes</h2>
                     <ul id="gatePassList" class="space-y-3">
                         <!-- Gate Passes will be rendered here by JavaScript -->
                     </ul>
@@ -332,14 +338,22 @@
                 <input type="text" id="editTruckNumber" required
                        class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <label for="editDate" class="block text-sm font-medium text-gray-700">Date</label>
-                <input type="date" id="editDate" required
-                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <label for="editPartyWeight" class="block text-sm font-medium text-gray-700">Party Weight ($kg$)</label>
-                <input type="number" id="editPartyWeight" required
-                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <label for="editOwnWeight" class="block text-sm font-medium text-gray-700">Own Weight ($kg$)</label>
-                <input type="number" id="editOwnWeight" required
-                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="relative">
+                    <input type="date" id="editDate" required
+                           class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="button" id="editDatePickerBtn" 
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <label for="editPartyWeight" class="block text-sm font-medium text-gray-700">Party Weight (quintal)</label>
+                <input type="number" id="editPartyWeight" step="0.01" min="0" required
+                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <label for="editOwnWeight" class="block text-sm font-medium text-gray-700">Own Weight (quintal)</label>
+                <input type="number" id="editOwnWeight" step="0.01" min="0" required
+                       class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                 <div class="flex justify-end gap-2 mt-4">
                     <button type="button" id="cancelEditButton" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
                     <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">Save</button>
@@ -724,7 +738,6 @@
         const reportsView = document.getElementById('reportsView');
         const addGatePassForm = document.getElementById('addGatePassForm');
         const gatePassList = document.getElementById('gatePassList');
-        const gatePassSearchInput = document.getElementById('gatePassSearchInput');
         const supplierSearchInput = document.getElementById('supplierSearchInput');
         const supplierDropdownList = document.getElementById('supplierDropdownList');
         const gatepassTypeSelect = document.getElementById('gatepassTypeSelect');
@@ -1176,18 +1189,23 @@
             }
         }
         
-        // Function to render gate passes based on a given array
+        // Function to render gate passes based on a given array (limited to last 5)
         function renderGatePasses(passes) {
             gatePassList.innerHTML = '';
             if (passes.length === 0) {
                 const noResults = document.createElement('li');
                 noResults.className = "text-center text-gray-500 py-4";
-                noResults.textContent = "No matching gate passes found.";
+                noResults.textContent = "No gate passes found.";
                 gatePassList.appendChild(noResults);
                 return;
             }
 
-            passes.forEach((gatePass) => {
+            // Sort by creation date (newest first) and limit to last 5
+            const sortedPasses = passes
+                .sort((a, b) => new Date(b.createdAt || b.id) - new Date(a.createdAt || a.id))
+                .slice(0, 5);
+
+            sortedPasses.forEach((gatePass) => {
                 const listItem = document.createElement('li');
                 listItem.id = `gate-pass-${gatePass.id}`;
                 listItem.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200 gap-2 transition-shadow duration-200 hover:shadow-md";
@@ -1200,8 +1218,8 @@
                     <p class="text-sm text-gray-700">Purchased From: <span class="font-medium">${gatePass.purchasedFrom}</span></p>
                     <p class="text-sm text-gray-700">Truck: <span class="font-medium">${gatePass.truckNumber}</span></p>
                     <p class="text-sm text-gray-700">Date: <span class="font-medium">${gatePass.date}</span></p>
-                    <p class="text-sm text-gray-700">Party Weight: <span class="font-medium">${gatePass.partyWeight} kg</span></p>
-                    <p class="text-sm text-gray-700">Own Weight: <span class="font-medium">${gatePass.ownWeight} kg</span></p>
+                    <p class="text-sm text-gray-700">Party Weight: <span class="font-medium">${gatePass.partyWeight} quintal</span></p>
+                    <p class="text-sm text-gray-700">Own Weight: <span class="font-medium">${gatePass.ownWeight} quintal</span></p>
                 `;
 
                 // Container for buttons
@@ -1241,16 +1259,7 @@
             });
         }
         
-        // Filter the gate pass list based on search input
-        gatePassSearchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filteredPasses = allGatePasses.filter(pass =>
-                pass.item.toLowerCase().includes(query) ||
-                pass.truckNumber.toLowerCase().includes(query) ||
-                pass.purchasedFrom.toLowerCase().includes(query)
-            );
-            renderGatePasses(filteredPasses);
-        });
+        // Search functionality removed - only showing last 5 gate passes
 
         function calculateAndRenderInventory(gatePasses) {
             const inventory = {};
@@ -1294,16 +1303,16 @@
                     <div class="grid grid-cols-2 gap-4 mt-2 text-sm">
                         <div class="bg-white p-3 rounded-lg shadow-sm">
                             <p class="text-gray-600">Total Incoming</p>
-                            <p class="font-semibold text-green-600">${itemData.incoming.toLocaleString()} kg</p>
+                            <p class="font-semibold text-green-600">${itemData.incoming.toLocaleString()} quintal</p>
                         </div>
                         <div class="bg-white p-3 rounded-lg shadow-sm">
                             <p class="text-gray-600">Total Outgoing</p>
-                            <p class="font-semibold text-red-600">${itemData.outgoing.toLocaleString()} kg</p>
+                            <p class="font-semibold text-red-600">${itemData.outgoing.toLocaleString()} quintal</p>
                         </div>
                     </div>
                     <div class="bg-white p-3 rounded-lg shadow-sm mt-4">
                         <p class="text-gray-600">Net Inventory</p>
-                        <p class="font-bold text-xl ${netColor}">${netInventory.toLocaleString()} kg</p>
+                        <p class="font-bold text-xl ${netColor}">${netInventory.toLocaleString()} quintal</p>
                     </div>
                 `;
                 inventoryReport.appendChild(itemReportDiv);
@@ -1311,46 +1320,172 @@
         }
 
         function populateSupplierDropdown(input, dropdownList, suppliers) {
-            const query = input.value.toLowerCase();
+            const query = input.value.toLowerCase().trim();
             dropdownList.innerHTML = '';
-            const filteredSuppliers = suppliers.filter(s => s.toLowerCase().includes(query));
+            
+            if (query.length === 0) {
+                dropdownList.classList.add('hidden');
+                return;
+            }
 
-            if (query.length > 0) {
-                // If a supplier with this name doesn't exist, show the "add new" option
-                if (!filteredSuppliers.some(s => s.toLowerCase() === query)) {
-                    const addOption = document.createElement('li');
-                    addOption.className = "p-3 bg-blue-100 text-blue-700 font-semibold cursor-pointer rounded-b-lg";
-                    addOption.textContent = `+ Add new supplier: "${input.value}"`;
-                    addOption.onclick = () => {
-                        input.value = input.value;
-                        dropdownList.classList.add('hidden');
-                    };
-                    dropdownList.appendChild(addOption);
+            // Enhanced filtering with fuzzy matching
+            const filteredSuppliers = suppliers.filter(supplier => {
+                const supplierLower = supplier.toLowerCase();
+                
+                // Exact match gets highest priority
+                if (supplierLower === query) {
+                    return { supplier, score: 100 };
                 }
+                
+                // Starts with query gets high priority
+                if (supplierLower.startsWith(query)) {
+                    return { supplier, score: 90 };
+                }
+                
+                // Contains query gets medium priority
+                if (supplierLower.includes(query)) {
+                    return { supplier, score: 70 };
+                }
+                
+                // Fuzzy matching for partial matches
+                if (fuzzyMatch(query, supplierLower)) {
+                    return { supplier, score: 50 };
+                }
+                
+                return null;
+            }).filter(item => item !== null)
+              .sort((a, b) => b.score - a.score)
+              .map(item => item.supplier);
 
-                filteredSuppliers.forEach(supplier => {
-                    const option = document.createElement('li');
-                    option.textContent = supplier;
-                    option.onclick = () => {
-                        input.value = supplier;
-                        dropdownList.classList.add('hidden');
-                    };
-                    dropdownList.appendChild(option);
-                });
+            // Show all suppliers if no matches found and query is short
+            if (filteredSuppliers.length === 0 && query.length < 3) {
+                dropdownList.classList.add('hidden');
+                return;
+            }
 
-                if (dropdownList.children.length > 0) {
-                    dropdownList.classList.remove('hidden');
-                } else {
+            // Add filtered suppliers
+            filteredSuppliers.forEach(supplier => {
+                const option = document.createElement('li');
+                option.className = "p-3 cursor-pointer hover:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0";
+                
+                // Highlight matching text
+                const highlightedSupplier = highlightMatch(supplier, query);
+                option.innerHTML = highlightedSupplier;
+                
+                option.onclick = () => {
+                    input.value = supplier;
                     dropdownList.classList.add('hidden');
-                }
+                    input.focus(); // Keep focus on input
+                };
+                
+                // Add keyboard navigation
+                option.addEventListener('mouseenter', () => {
+                    // Remove previous selection
+                    dropdownList.querySelectorAll('li').forEach(li => li.classList.remove('bg-blue-50'));
+                    option.classList.add('bg-blue-50');
+                });
+                
+                dropdownList.appendChild(option);
+            });
+
+            // Add "Add new supplier" option if no exact match
+            const exactMatch = suppliers.some(s => s.toLowerCase() === query);
+            if (!exactMatch && query.length > 0) {
+                const addOption = document.createElement('li');
+                addOption.className = "p-3 bg-blue-50 text-blue-700 font-semibold cursor-pointer border-t-2 border-blue-200 hover:bg-blue-100 transition-colors";
+                addOption.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add new supplier: "${input.value}"
+                    </div>
+                `;
+                addOption.onclick = () => {
+                    input.value = input.value;
+                    dropdownList.classList.add('hidden');
+                    input.focus();
+                };
+                dropdownList.appendChild(addOption);
+            }
+
+            // Show dropdown if we have options
+            if (dropdownList.children.length > 0) {
+                dropdownList.classList.remove('hidden');
             } else {
                 dropdownList.classList.add('hidden');
             }
         }
 
+        // Fuzzy matching function
+        function fuzzyMatch(query, text) {
+            if (query.length === 0) return true;
+            if (query.length > text.length) return false;
+            
+            let queryIndex = 0;
+            for (let i = 0; i < text.length && queryIndex < query.length; i++) {
+                if (text[i] === query[queryIndex]) {
+                    queryIndex++;
+                }
+            }
+            return queryIndex === query.length;
+        }
+
+        // Highlight matching text in suggestions
+        function highlightMatch(text, query) {
+            if (!query) return text;
+            
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<span class="font-semibold text-blue-600 bg-blue-100 px-1 rounded">$1</span>');
+        }
+
         // Handle input for main form supplier
         supplierSearchInput.addEventListener('input', (e) => {
             populateSupplierDropdown(e.target, supplierDropdownList, allSuppliers);
+        });
+
+        // Add keyboard navigation for supplier dropdown
+        supplierSearchInput.addEventListener('keydown', (e) => {
+            const dropdown = supplierDropdownList;
+            const options = dropdown.querySelectorAll('li');
+            const currentSelected = dropdown.querySelector('li.bg-blue-50');
+            let currentIndex = -1;
+            
+            if (currentSelected) {
+                currentIndex = Array.from(options).indexOf(currentSelected);
+            }
+            
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (options.length > 0) {
+                        const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+                        options.forEach(li => li.classList.remove('bg-blue-50'));
+                        options[nextIndex].classList.add('bg-blue-50');
+                    }
+                    break;
+                    
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (options.length > 0) {
+                        const prevIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+                        options.forEach(li => li.classList.remove('bg-blue-50'));
+                        options[prevIndex].classList.add('bg-blue-50');
+                    }
+                    break;
+                    
+                case 'Enter':
+                    e.preventDefault();
+                    if (currentSelected) {
+                        currentSelected.click();
+                    }
+                    break;
+                    
+                case 'Escape':
+                    dropdown.classList.add('hidden');
+                    supplierSearchInput.blur();
+                    break;
+            }
         });
 
         // Handle click outside to close dropdown
@@ -1376,6 +1511,50 @@
         // Handle input for edit modal supplier
         editSupplierSearchInput.addEventListener('input', (e) => {
             populateSupplierDropdown(e.target, editSupplierDropdownList, allSuppliers);
+        });
+
+        // Add keyboard navigation for edit modal supplier dropdown
+        editSupplierSearchInput.addEventListener('keydown', (e) => {
+            const dropdown = editSupplierDropdownList;
+            const options = dropdown.querySelectorAll('li');
+            const currentSelected = dropdown.querySelector('li.bg-blue-50');
+            let currentIndex = -1;
+            
+            if (currentSelected) {
+                currentIndex = Array.from(options).indexOf(currentSelected);
+            }
+            
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (options.length > 0) {
+                        const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+                        options.forEach(li => li.classList.remove('bg-blue-50'));
+                        options[nextIndex].classList.add('bg-blue-50');
+                    }
+                    break;
+                    
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (options.length > 0) {
+                        const prevIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+                        options.forEach(li => li.classList.remove('bg-blue-50'));
+                        options[prevIndex].classList.add('bg-blue-50');
+                    }
+                    break;
+                    
+                case 'Enter':
+                    e.preventDefault();
+                    if (currentSelected) {
+                        currentSelected.click();
+                    }
+                    break;
+                    
+                case 'Escape':
+                    dropdown.classList.add('hidden');
+                    editSupplierSearchInput.blur();
+                    break;
+            }
         });
 
         // Handle click outside to close edit modal dropdown
@@ -1419,8 +1598,8 @@
             const purchasedFrom = supplierSearchInput.value;
             const truckNumber = document.getElementById('truckNumber').value;
             const date = document.getElementById('date').value;
-            const partyWeight = parseInt(document.getElementById('partyWeight').value, 10);
-            const ownWeight = parseInt(document.getElementById('ownWeight').value, 10);
+            const partyWeight = parseFloat(document.getElementById('partyWeight').value);
+            const ownWeight = parseFloat(document.getElementById('ownWeight').value);
 
             console.log("Form data:", { type, item, purchasedFrom, truckNumber, date, partyWeight, ownWeight });
 
@@ -1644,8 +1823,8 @@
             const purchasedFrom = editSupplierSearchInput.value;
             const truckNumber = editTruckNumberInput.value;
             const date = editDateInput.value;
-            const partyWeight = parseInt(editPartyWeightInput.value, 10);
-            const ownWeight = parseInt(editOwnWeightInput.value, 10);
+            const partyWeight = parseFloat(editPartyWeightInput.value);
+            const ownWeight = parseFloat(editOwnWeightInput.value);
 
             // Check if the supplier is new and add it to the database
             const supplierExists = allSuppliers.some(s => s === purchasedFrom);
@@ -1734,11 +1913,11 @@
                             </div>
                             <div>
                                 <p style="font-size: 0.875rem; color: #6b7280;">Party Weight</p>
-                                <p style="font-weight: 500; color: #1f2937;">${gatePass.partyWeight} kg</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.partyWeight} quintal</p>
                             </div>
                             <div>
                                 <p style="font-size: 0.875rem; color: #6b7280;">Own Weight</p>
-                                <p style="font-weight: 500; color: #1f2937;">${gatePass.ownWeight} kg</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.ownWeight} quintal</p>
                             </div>
                         </div>
                     </div>
@@ -1832,6 +2011,169 @@
         document.getElementById('usernameInput').addEventListener('input', clearLoginErrors);
         document.getElementById('passwordInput').addEventListener('input', clearLoginErrors);
 
+        // Enhanced date picker functionality
+        function setupDatePicker() {
+            const dateInput = document.getElementById('date');
+            const editDateInput = document.getElementById('editDate');
+            const datePickerBtn = document.getElementById('datePickerBtn');
+            const editDatePickerBtn = document.getElementById('editDatePickerBtn');
+            
+            console.log('Setting up date picker...');
+            console.log('Date input found:', !!dateInput);
+            console.log('Date picker button found:', !!datePickerBtn);
+            console.log('Edit date input found:', !!editDateInput);
+            console.log('Edit date picker button found:', !!editDatePickerBtn);
+            
+            // Function to get current date in YYYY-MM-DD format
+            function getCurrentDate() {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            // Function to open date picker and set today's date if empty
+            function openDatePicker(input) {
+                // If input is empty, set today's date
+                if (!input.value) {
+                    input.value = getCurrentDate();
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                
+                // Focus the input first
+                input.focus();
+                
+                // Try multiple methods to open the date picker
+                setTimeout(() => {
+                    // Method 1: Try showPicker() if available
+                    if (input.showPicker) {
+                        try {
+                            input.showPicker();
+                            return;
+                        } catch (e) {
+                            console.log('showPicker not supported');
+                        }
+                    }
+                    
+                    // Method 2: Create and dispatch a mouse event
+                    const mouseEvent = new MouseEvent('mousedown', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    input.dispatchEvent(mouseEvent);
+                    
+                    // Method 3: Trigger focus and click
+                    input.focus();
+                    input.click();
+                }, 10);
+            }
+            
+            // Main form date picker button
+            if (datePickerBtn && dateInput) {
+                datePickerBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Date picker button clicked');
+                    
+                    // If input is empty, set today's date
+                    if (!dateInput.value) {
+                        dateInput.value = getCurrentDate();
+                        dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    
+                    // Focus the input first
+                    dateInput.focus();
+                    
+                    // Use a small delay to ensure focus is set
+                    setTimeout(() => {
+                        // Try to trigger the date picker
+                        if (dateInput.showPicker) {
+                            try {
+                                dateInput.showPicker();
+                            } catch (err) {
+                                console.log('showPicker failed, trying click');
+                                dateInput.click();
+                            }
+                        } else {
+                            // Fallback: trigger click event
+                            dateInput.click();
+                        }
+                    }, 50);
+                });
+                
+                // Also add mousedown event as backup
+                datePickerBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    console.log('Date picker button mousedown');
+                });
+                
+                console.log('Date picker button event listener added');
+            } else {
+                console.error('Date picker button or input not found');
+            }
+            
+            // Edit modal date picker button
+            if (editDatePickerBtn && editDateInput) {
+                editDatePickerBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Edit date picker button clicked');
+                    
+                    // If input is empty, set today's date
+                    if (!editDateInput.value) {
+                        editDateInput.value = getCurrentDate();
+                        editDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    
+                    // Focus the input first
+                    editDateInput.focus();
+                    
+                    // Use a small delay to ensure focus is set
+                    setTimeout(() => {
+                        // Try to trigger the date picker
+                        if (editDateInput.showPicker) {
+                            try {
+                                editDateInput.showPicker();
+                            } catch (err) {
+                                console.log('Edit showPicker failed, trying click');
+                                editDateInput.click();
+                            }
+                        } else {
+                            // Fallback: trigger click event
+                            editDateInput.click();
+                        }
+                    }, 50);
+                });
+                
+                // Also add mousedown event as backup
+                editDatePickerBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    console.log('Edit date picker button mousedown');
+                });
+                
+                console.log('Edit date picker button event listener added');
+            } else {
+                console.error('Edit date picker button or input not found');
+            }
+            
+            // Auto-populate only when user clicks on the input field (not on focus)
+            dateInput.addEventListener('click', () => {
+                if (!dateInput.value) {
+                    dateInput.value = getCurrentDate();
+                    dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+            
+            editDateInput.addEventListener('click', () => {
+                if (!editDateInput.value) {
+                    editDateInput.value = getCurrentDate();
+                    editDateInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        }
+        
         logoutBtn.addEventListener('click', logout);
         addGatePassForm.addEventListener('submit', addGatePass);
         editForm.addEventListener('submit', saveEdit);
@@ -1845,6 +2187,8 @@
         // Initialize app
         window.onload = () => {
             showLoginModal();
+            // Initialize date picker functionality after DOM is loaded
+            setupDatePicker();
             // Clean up any existing duplicates on app load
             setTimeout(() => {
                 removeDuplicateGatePasses();
