@@ -352,7 +352,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setDoc, setLogLevel, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         console.log("✅ Firebase SDKs loaded successfully");
 
@@ -388,6 +388,101 @@
 
         // User authentication will be handled by Firebase
         // No hardcoded demo users for security
+        
+        // Function to create initial users in the database
+        async function createInitialUsers() {
+            try {
+                const usersRef = collection(db, 'users');
+                
+                // Check if users already exist
+                const existingUsers = await getDocs(usersRef);
+                if (!existingUsers.empty) {
+                    console.log("Users already exist in database");
+                    return;
+                }
+                
+                // Create initial users
+                const initialUsers = [
+                    {
+                        username: 'admin',
+                        password: 'admin123', // In production, use proper password hashing
+                        name: 'Administrator',
+                        role: 'admin',
+                        email: 'admin@grainprocurement.com',
+                        isActive: true,
+                        createdAt: new Date()
+                    },
+                    {
+                        username: 'user1',
+                        password: 'user123', // In production, use proper password hashing
+                        name: 'User One',
+                        role: 'user1',
+                        email: 'user1@grainprocurement.com',
+                        isActive: true,
+                        createdAt: new Date()
+                    },
+                    {
+                        username: 'user2',
+                        password: 'user123', // In production, use proper password hashing
+                        name: 'User Two',
+                        role: 'user2',
+                        email: 'user2@grainprocurement.com',
+                        isActive: true,
+                        createdAt: new Date()
+                    }
+                ];
+                
+                // Add users to database
+                for (const user of initialUsers) {
+                    await addDoc(usersRef, user);
+                    console.log(`Created user: ${user.username}`);
+                }
+                
+                console.log("Initial users created successfully");
+                showNotification("Initial users created in database", 'success');
+                
+            } catch (error) {
+                console.error("Error creating initial users:", error);
+                showNotification("Error creating initial users", 'error');
+            }
+        }
+
+        // Function to register a new user
+        async function registerUser(userData) {
+            try {
+                const usersRef = collection(db, 'users');
+                
+                // Check if username already exists
+                const q = query(usersRef, where('username', '==', userData.username));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    showNotification("Username already exists", 'error');
+                    return false;
+                }
+                
+                // Add new user to database
+                const newUser = {
+                    username: userData.username,
+                    password: userData.password, // In production, use proper password hashing
+                    name: userData.name,
+                    role: userData.role || 'user1',
+                    email: userData.email || '',
+                    isActive: true,
+                    createdAt: new Date()
+                };
+                
+                await addDoc(usersRef, newUser);
+                console.log(`New user registered: ${userData.username}`);
+                showNotification(`User ${userData.username} registered successfully`, 'success');
+                return true;
+                
+            } catch (error) {
+                console.error("Error registering user:", error);
+                showNotification("Error registering user", 'error');
+                return false;
+            }
+        }
 
         // Check if all required Firebase config fields are present
         const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
@@ -422,6 +517,11 @@
                 setTimeout(() => {
                     testFirebaseConnection();
                 }, 1500); // Increased delay for better reliability
+                
+                // Create initial users after Firebase is ready
+                setTimeout(() => {
+                    createInitialUsers();
+                }, 3000); // Wait a bit more for Firebase to be fully ready
                 
             } catch (e) {
                 console.error("❌ Firebase initialization failed:", e);
@@ -722,22 +822,123 @@
             mainApp.classList.remove('hidden');
         }
 
-        function login(username, password) {
-            // For now, allow any non-empty credentials for demo purposes
-            // In production, this should integrate with proper authentication system
-            if (username && password) {
-                currentUser = { 
-                    username: username, 
-                    name: username.charAt(0).toUpperCase() + username.slice(1),
-                    role: username.toLowerCase().includes('admin') ? 'admin' : 'user1'
-                };
-                userRole = currentUser.role;
-                hideLoginModal();
-                updateUIForUserRole();
-                setupAuthAndListener();
-                return true;
+        async function login(username, password) {
+            // Clear any previous error states
+            clearLoginErrors();
+            
+            if (!username || !password) {
+                showLoginError("Please enter both username and password");
+                showNotification("Please enter both username and password", 'error');
+                return false;
             }
-            return false;
+
+            try {
+                // Show loading state
+                showNotification("Authenticating...", 'info');
+                setLoginLoading(true);
+                
+                // Query the users collection in Firestore
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, where('username', '==', username));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    showLoginError("Username not found. Please check your username and try again.");
+                    showNotification("Invalid username or password", 'error');
+                    return false;
+                }
+                
+                // Get the first matching user document
+                const userDoc = querySnapshot.docs[0];
+                const userData = userDoc.data();
+                
+                // Verify password (in production, use proper password hashing)
+                if (userData.password === password) {
+                    currentUser = {
+                        id: userDoc.id,
+                        username: userData.username,
+                        name: userData.name,
+                        role: userData.role,
+                        email: userData.email || '',
+                        isActive: userData.isActive !== false // Default to true if not specified
+                    };
+                    
+                    // Check if user is active
+                    if (!currentUser.isActive) {
+                        showLoginError("Account is deactivated. Please contact administrator.");
+                        showNotification("Account is deactivated. Please contact administrator.", 'error');
+                        return false;
+                    }
+                    
+                    userRole = currentUser.role;
+                    hideLoginModal();
+                    updateUIForUserRole();
+                    setupAuthAndListener();
+                    showNotification(`Welcome back, ${currentUser.name}!`, 'success');
+                    return true;
+                } else {
+                    showLoginError("Incorrect password. Please check your password and try again.");
+                    showNotification("Invalid username or password", 'error');
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error("Login error:", error);
+                showLoginError("Login failed. Please check your connection and try again.");
+                showNotification("Login failed. Please try again.", 'error');
+                return false;
+            } finally {
+                setLoginLoading(false);
+            }
+        }
+
+        // Helper functions for login error handling
+        function showLoginError(message) {
+            // Create or update error message element
+            let errorElement = document.getElementById('loginError');
+            if (!errorElement) {
+                errorElement = document.createElement('div');
+                errorElement.id = 'loginError';
+                errorElement.className = 'mt-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm';
+                // Insert after the login form
+                const loginForm = document.getElementById('loginForm');
+                loginForm.parentNode.insertBefore(errorElement, loginForm.nextSibling);
+            }
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Add red border to input fields
+            const usernameInput = document.getElementById('usernameInput');
+            const passwordInput = document.getElementById('passwordInput');
+            usernameInput.classList.add('border-red-500');
+            passwordInput.classList.add('border-red-500');
+        }
+
+        function clearLoginErrors() {
+            // Hide error message
+            const errorElement = document.getElementById('loginError');
+            if (errorElement) {
+                errorElement.style.display = 'none';
+            }
+            
+            // Remove red borders from input fields
+            const usernameInput = document.getElementById('usernameInput');
+            const passwordInput = document.getElementById('passwordInput');
+            usernameInput.classList.remove('border-red-500');
+            passwordInput.classList.remove('border-red-500');
+        }
+
+        function setLoginLoading(loading) {
+            const loginButton = document.querySelector('#loginForm button[type="submit"]');
+            if (loading) {
+                loginButton.disabled = true;
+                loginButton.textContent = 'Authenticating...';
+                loginButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+                loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
 
         function logout() {
@@ -1615,18 +1816,21 @@
         }
 
         // Attach event listeners
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('usernameInput').value;
             const password = document.getElementById('passwordInput').value;
             
-            if (login(username, password)) {
+            const success = await login(username, password);
+            if (success) {
                 document.getElementById('usernameInput').value = '';
                 document.getElementById('passwordInput').value = '';
-            } else {
-                alert('Invalid username or password');
             }
         });
+
+        // Clear errors when user starts typing
+        document.getElementById('usernameInput').addEventListener('input', clearLoginErrors);
+        document.getElementById('passwordInput').addEventListener('input', clearLoginErrors);
 
         logoutBtn.addEventListener('click', logout);
         addGatePassForm.addEventListener('submit', addGatePass);
