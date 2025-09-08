@@ -122,6 +122,13 @@
             <div id="statusMessage" class="text-center p-2 rounded-lg mb-4 text-sm font-semibold text-gray-700 bg-gray-200">
                 Connecting to system...
             </div>
+            
+            <!-- Network Status Indicator -->
+            <div id="networkStatus" class="text-center mb-2">
+                <span id="networkStatusText" class="text-xs text-gray-500">
+                    <span id="networkIcon">🌐</span> Checking connection...
+                </span>
+            </div>
 
             <!-- Sync Status and Manual Sync Button -->
             <div id="syncStatus" class="text-center mb-4">
@@ -185,11 +192,13 @@
                                 <option value="Rice">Rice</option>
                             </select>
                         </div>
-                        <div class="dropdown-container">
-                            <label for="supplierSearchInput" class="block text-sm font-medium text-gray-700">Purchased From</label>
-                            <input type="text" id="supplierSearchInput" placeholder="Search or add new supplier" required
-                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
-                            <ul id="supplierDropdownList" class="dropdown-list hidden"></ul>
+                        <div>
+                            <label for="supplierSelect" class="block text-sm font-medium text-gray-700">Purchased From</label>
+                            <select id="supplierSelect" required
+                                class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select a party...</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
                         </div>
                         <div>
                             <label for="truckNumber" class="block text-sm font-medium text-gray-700">Truck Number</label>
@@ -219,6 +228,11 @@
                             <input type="number" id="ownWeight" placeholder="Own Weight" step="0.01" min="0" required
                                 class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         </div>
+                    </div>
+                    <div>
+                        <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                        <textarea id="remarks" placeholder="Enter any additional remarks or notes..." rows="3"
+                            class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow resize-vertical"></textarea>
                     </div>
                     <button type="submit" id="saveGatePassBtn"
                             class="w-full p-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md mt-2">
@@ -273,6 +287,32 @@
                         </div>
                     </div>
 
+                    <!-- Party Management -->
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-3">Party Management</h3>
+                        <div class="space-y-4">
+                            <!-- Add New Party Form -->
+                            <div class="bg-white p-4 rounded-lg">
+                                <h4 class="font-medium mb-3">Add New Party</h4>
+                                <div class="flex gap-2">
+                                    <input type="text" id="newPartyName" placeholder="Enter party name" 
+                                           class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <button id="addPartyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                        Add Party
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Party List -->
+                            <div class="bg-white p-4 rounded-lg">
+                                <h4 class="font-medium mb-3">Existing Parties</h4>
+                                <div id="partyList" class="space-y-2 max-h-40 overflow-y-auto">
+                                    <!-- Parties will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- System Statistics -->
                     <div class="bg-gray-100 p-4 rounded-lg">
                         <h3 class="text-lg font-semibold mb-3">System Statistics</h3>
@@ -283,7 +323,7 @@
                             </div>
                             <div class="bg-white p-3 rounded text-center">
                                 <p class="text-2xl font-bold text-green-600" id="totalSuppliers">0</p>
-                                <p class="text-sm text-gray-600">Total Suppliers</p>
+                                <p class="text-sm text-gray-600">Total Parties</p>
                             </div>
                         </div>
                     </div>
@@ -328,11 +368,13 @@
                     <option value="Wheat">Wheat</option>
                     <option value="Rice">Rice</option>
                 </select>
-                <div class="dropdown-container">
-                    <label for="editSupplierSearchInput" class="block text-sm font-medium text-gray-700">Purchased From</label>
-                    <input type="text" id="editSupplierSearchInput" required
-                           class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <ul id="editSupplierDropdownList" class="dropdown-list hidden"></ul>
+                <div>
+                    <label for="editSupplierSelect" class="block text-sm font-medium text-gray-700">Purchased From</label>
+                    <select id="editSupplierSelect" required
+                        class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select a party...</option>
+                        <!-- Options will be populated dynamically -->
+                    </select>
                 </div>
                 <label for="editTruckNumber" class="block text-sm font-medium text-gray-700">Truck Number</label>
                 <input type="text" id="editTruckNumber" required
@@ -354,6 +396,9 @@
                 <label for="editOwnWeight" class="block text-sm font-medium text-gray-700">Own Weight (quintal)</label>
                 <input type="number" id="editOwnWeight" step="0.01" min="0" required
                        class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <label for="editRemarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                <textarea id="editRemarks" placeholder="Enter any additional remarks or notes..." rows="3"
+                    class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"></textarea>
                 <div class="flex justify-end gap-2 mt-4">
                     <button type="button" id="cancelEditButton" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
                     <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">Save</button>
@@ -661,65 +706,122 @@
                     showNotification(`❌ Firebase error: ${e.message}`, 'error');
                 }
                 
-                // Fallback to local storage
-                console.log("📱 Switching to local storage mode");
-                useLocalStorage = true;
-                showNotification("📱 Working in OFFLINE mode - check console for Firebase connection details", 'info');
+                // Cloud-only mode: Show error instead of fallback
+                console.log("❌ Firebase connection failed - Cloud-only mode active");
+                showNotification("❌ Cannot connect to cloud storage. Please check your internet connection and try again.", 'error');
                 
-                // Update status message to show offline mode
+                // Update status message to show connection error
                 if (statusMessage) {
-                    statusMessage.textContent = "System Ready (OFFLINE MODE)";
+                    statusMessage.textContent = "Connection Error - Cloud Storage Required";
                     statusMessage.classList.remove('bg-green-200', 'text-green-800');
-                    statusMessage.classList.add('bg-orange-200', 'text-orange-800');
+                    statusMessage.classList.add('bg-red-200', 'text-red-800');
                 }
             }
         }
 
-        // Local Storage Functions (Fallback)
-        function saveToLocalStorage(key, data) {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-                console.log(`Data saved to local storage: ${key}`);
-                return true;
-            } catch (e) {
-                console.error("Error saving to local storage:", e);
-                return false;
+        // Cloud-Only Storage Functions
+        // Note: Local storage functions removed - all data must go through Firebase
+        
+        function showCloudOnlyError(operation) {
+            const message = `❌ ${operation} failed: Cloud storage connection required. Please check your internet connection and try again.`;
+            showNotification(message, 'error');
+            console.error(`Cloud-only mode: ${operation} blocked - Firebase connection required`);
+        }
+        
+        function isCloudStorageAvailable() {
+            return db && auth && userAuthReady;
+        }
+        
+        // Enhanced data validation for cloud-only mode
+        function validateGatePassData(formData) {
+            const errors = [];
+            
+            if (!formData.type || formData.type.trim() === '') {
+                errors.push('Gate pass type is required');
+            }
+            
+            if (!formData.item || formData.item.trim() === '') {
+                errors.push('Item name is required');
+            }
+            
+            if (!formData.purchasedFrom || formData.purchasedFrom.trim() === '') {
+                errors.push('Supplier name is required');
+            }
+            
+            if (!formData.truckNumber || formData.truckNumber.trim() === '') {
+                errors.push('Truck number is required');
+            }
+            
+            if (!formData.date) {
+                errors.push('Date is required');
+            }
+            
+            if (isNaN(formData.partyWeight) || formData.partyWeight <= 0) {
+                errors.push('Valid party weight is required');
+            }
+            
+            if (isNaN(formData.ownWeight) || formData.ownWeight <= 0) {
+                errors.push('Valid own weight is required');
+            }
+            
+            return errors;
+        }
+        
+        // Network connectivity check
+        function checkNetworkConnectivity() {
+            return navigator.onLine;
+        }
+        
+        // Network status monitoring
+        function updateNetworkStatus() {
+            const networkStatusText = document.getElementById('networkStatusText');
+            const networkIcon = document.getElementById('networkIcon');
+            
+            if (checkNetworkConnectivity()) {
+                networkStatusText.innerHTML = '<span id="networkIcon">🌐</span> Online - Cloud storage available';
+                networkStatusText.className = 'text-xs text-green-600';
+            } else {
+                networkStatusText.innerHTML = '<span id="networkIcon">📡</span> Offline - Cloud storage unavailable';
+                networkStatusText.className = 'text-xs text-red-600';
             }
         }
-
-        function loadFromLocalStorage(key) {
-            try {
-                const data = localStorage.getItem(key);
-                return data ? JSON.parse(data) : [];
-            } catch (e) {
-                console.error("Error loading from local storage:", e);
-                return [];
-            }
+        
+        // Initialize network monitoring
+        function initializeNetworkMonitoring() {
+            updateNetworkStatus();
+            
+            // Listen for online/offline events
+            window.addEventListener('online', () => {
+                console.log("🌐 Network connection restored");
+                updateNetworkStatus();
+                showNotification("🌐 Network connection restored", 'success');
+            });
+            
+            window.addEventListener('offline', () => {
+                console.log("📡 Network connection lost");
+                updateNetworkStatus();
+                showNotification("📡 Network connection lost - Cloud storage unavailable", 'error');
+            });
         }
-
-        function addGatePassToLocal(gatePassData) {
-            const existingData = loadFromLocalStorage('gate_passes');
-            const newData = {
-                id: Date.now().toString(),
-                ...gatePassData,
-                createdAt: new Date().toISOString()
-            };
-            existingData.push(newData);
-            return saveToLocalStorage('gate_passes', existingData);
-        }
-
-        function addSupplierToLocal(supplierName) {
-            const existingData = loadFromLocalStorage('suppliers');
-            if (!existingData.some(s => s.name === supplierName)) {
-                const newSupplier = {
-                    id: Date.now().toString(),
-                    name: supplierName,
-                    createdAt: new Date().toISOString()
-                };
-                existingData.push(newSupplier);
-                return saveToLocalStorage('suppliers', existingData);
+        
+        // Enhanced error recovery
+        function handleCloudError(error, operation) {
+            console.error(`❌ Cloud operation failed (${operation}):`, error);
+            
+            if (!checkNetworkConnectivity()) {
+                showNotification("❌ No internet connection. Please check your network and try again.", 'error');
+                return;
             }
-            return true;
+            
+            if (error.code === 'permission-denied') {
+                showNotification("❌ Permission denied. Please contact administrator.", 'error');
+            } else if (error.code === 'unavailable') {
+                showNotification("❌ Cloud service temporarily unavailable. Please try again later.", 'error');
+            } else if (error.code === 'failed-precondition') {
+                showNotification("❌ Database not ready. Please contact administrator.", 'error');
+            } else {
+                showNotification(`❌ ${operation} failed: ${error.message}`, 'error');
+            }
         }
 
         // DOM elements
@@ -738,8 +840,11 @@
         const reportsView = document.getElementById('reportsView');
         const addGatePassForm = document.getElementById('addGatePassForm');
         const gatePassList = document.getElementById('gatePassList');
-        const supplierSearchInput = document.getElementById('supplierSearchInput');
-        const supplierDropdownList = document.getElementById('supplierDropdownList');
+        const supplierSelect = document.getElementById('supplierSelect');
+        const editSupplierSelect = document.getElementById('editSupplierSelect');
+        const newPartyName = document.getElementById('newPartyName');
+        const addPartyBtn = document.getElementById('addPartyBtn');
+        const partyList = document.getElementById('partyList');
         const gatepassTypeSelect = document.getElementById('gatepassTypeSelect');
         const inventoryReport = document.getElementById('inventoryReport');
         const notification = document.getElementById('notification');
@@ -764,6 +869,8 @@
         const editDateInput = document.getElementById('editDate');
         const editPartyWeightInput = document.getElementById('editPartyWeight');
         const editOwnWeightInput = document.getElementById('editOwnWeight');
+        const editRemarks = document.getElementById('editRemarks');
+        const remarks = document.getElementById('remarks');
         const editGatepassTypeSelect = document.getElementById('editGatepassTypeSelect');
         const cancelEditButton = document.getElementById('cancelEditButton');
 
@@ -955,12 +1062,35 @@
         }
 
         function logout() {
+            console.log("🔐 Logging out user...");
+            
+            // Clear user session data
             currentUser = null;
             userRole = null;
             userAuthReady = false;
             userId = null;
+            
+            // Clear application data arrays
+            allGatePasses.length = 0;
+            allSuppliers.length = 0;
+            
+            // Clear UI displays
+            gatePassList.innerHTML = '';
+            inventoryReport.innerHTML = '';
+            
+            // Sign out from Firebase if authenticated
+            if (auth && auth.currentUser) {
+                auth.signOut().then(() => {
+                    console.log("✅ Firebase sign out successful");
+                }).catch((error) => {
+                    console.error("❌ Firebase sign out error:", error);
+                });
+            }
+            
+            // Show login modal
             showLoginModal();
-            // Reset UI
+            
+            // Reset UI to default state
             mainView.classList.remove('hidden');
             reportsView.classList.add('hidden');
             adminView.classList.add('hidden');
@@ -970,10 +1100,18 @@
             reportsViewBtn.classList.add('bg-gray-200', 'text-gray-800');
             adminViewBtn.classList.remove('bg-blue-600', 'text-white');
             adminViewBtn.classList.add('bg-gray-200', 'text-gray-800');
+            
             // Reset status message
             statusMessage.textContent = "Please log in to continue";
-            statusMessage.classList.remove('bg-green-200', 'text-green-800');
+            statusMessage.classList.remove('bg-green-200', 'text-green-800', 'bg-orange-200', 'text-orange-800', 'bg-red-200', 'text-red-800');
             statusMessage.classList.add('bg-gray-200', 'text-gray-700');
+            
+            // Clear user ID display
+            userIdDisplay.textContent = '';
+            
+            // Show logout confirmation
+            showNotification("✅ Logged out successfully", 'success');
+            console.log("✅ Logout completed - all session data cleared");
         }
 
         function updateUIForUserRole() {
@@ -1070,123 +1208,87 @@
 
             } catch (error) {
                 console.error("❌ Authentication failed:", error);
-                showNotification("Authentication failed. Using offline mode.", 'error');
+                showNotification("❌ Authentication failed. Cloud storage connection required.", 'error');
                 
-                // Fallback to local-only mode
-                userId = currentUser ? currentUser.username + '_' + currentUser.role : 'offline_user';
+                // Cloud-only mode: Authentication failed
+                userId = currentUser ? currentUser.username + '_' + currentUser.role : 'cloud_user';
                 userAuthReady = false; // Mark as not ready for Firebase operations
                 userIdDisplay.textContent = userId;
-                statusMessage.textContent = "System Ready (Offline Mode)";
+                statusMessage.textContent = "System Ready (Cloud Storage Required)";
                 statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
-                statusMessage.classList.add('bg-yellow-200', 'text-yellow-800');
+                statusMessage.classList.add('bg-orange-200', 'text-orange-800');
                 
-                // Load local data only
-                loadLocalData();
+                // Show cloud-only error
+                showCloudOnlyError("Authentication");
             }
         }
 
-        // Load data from local storage and optionally sync with Firebase
+        // Cloud-only data listeners
         function startRealtimeListeners() {
-            console.log("🔄 Starting data listeners...");
+            console.log("🔄 Starting cloud-only data listeners...");
             
-            // Load data from local storage immediately
-            loadLocalData();
+            // Check if cloud storage is available
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Data loading");
+                return;
+            }
             
-            // If Firebase is available, also listen for real-time updates
-            if (userAuthReady && db) {
-                try {
-                    // Listener for Suppliers
-                    const suppliersRef = collection(db, 'suppliers');
-                    onSnapshot(suppliersRef, (snapshot) => {
-                        const firebaseSuppliers = [];
-                        snapshot.forEach(doc => firebaseSuppliers.push(doc.data().name));
-                        
-                        // Merge with local suppliers (avoid duplicates)
-                        const localSuppliers = loadFromLocalStorage('suppliers').map(s => s.name);
-                        allSuppliers = [...new Set([...firebaseSuppliers, ...localSuppliers])];
-                        console.log("Suppliers loaded (Firebase + Local):", allSuppliers);
-                    }, (error) => {
-                        console.error("Error fetching suppliers from Firebase:", error);
-                        console.log("Using local suppliers only");
+            try {
+                // Real-time listener for Suppliers
+                const suppliersRef = collection(db, 'suppliers');
+                onSnapshot(suppliersRef, (snapshot) => {
+                    allSuppliers.length = 0; // Clear existing data
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        allSuppliers.push(data.name);
                     });
+                    console.log("✅ Suppliers loaded from cloud:", allSuppliers.length);
+                    
+                    // Update dropdowns when suppliers change
+                    populateSupplierDropdowns();
+                }, (error) => {
+                    console.error("❌ Error fetching suppliers from cloud:", error);
+                    showNotification("❌ Failed to load suppliers from cloud", 'error');
+                });
 
-                    // Listener for Gate Passes
-                    const gatePassesRef = collection(db, 'gate_passes');
-                    onSnapshot(gatePassesRef, (snapshot) => {
-                        const firebaseGatePasses = [];
-                        snapshot.forEach((doc) => {
-                            const gatePass = { id: doc.id, ...doc.data() };
-                            firebaseGatePasses.push(gatePass);
-                        });
-                        
-                        // Merge with local gate passes (prioritize Firebase for synced items)
-                        const localGatePasses = loadFromLocalStorage('gate_passes');
-                        const unsyncedLocal = localGatePasses.filter(item => !item.savedToFirebase);
-                        
-                        // Create a map to track existing entries and prevent duplicates
-                        const existingIds = new Set();
-                        const mergedGatePasses = [];
-                        
-                        // Add Firebase entries first (they take priority)
-                        firebaseGatePasses.forEach(gatePass => {
-                            if (!existingIds.has(gatePass.id)) {
-                                mergedGatePasses.push(gatePass);
-                                existingIds.add(gatePass.id);
-                            }
-                        });
-                        
-                        // Add unsynced local entries (only if not already in Firebase)
-                        unsyncedLocal.forEach(gatePass => {
-                            if (!existingIds.has(gatePass.id)) {
-                                mergedGatePasses.push(gatePass);
-                                existingIds.add(gatePass.id);
-                            }
-                        });
-                        
-                        allGatePasses = mergedGatePasses;
-                        console.log("Gate passes loaded (Firebase + Local):", allGatePasses.length);
-                        renderGatePasses(allGatePasses);
-                        calculateAndRenderInventory(allGatePasses);
-                        
-                        if (allGatePasses.length > 0) {
-                            showNotification(`${allGatePasses.length} gate passes loaded`, 'info');
-                        }
-                    }, (error) => {
-                        console.error("Error fetching gate pass data from Firebase:", error);
-                        console.log("Using local data only");
-                        showNotification("Using local data only - will sync when connection improves", 'info');
+                // Real-time listener for Gate Passes
+                const gatePassesRef = collection(db, 'gate_passes');
+                onSnapshot(gatePassesRef, (snapshot) => {
+                    allGatePasses.length = 0; // Clear existing data
+                    snapshot.forEach((doc) => {
+                        const gatePass = { firebaseId: doc.id, ...doc.data() };
+                        allGatePasses.push(gatePass);
                     });
-                } catch (error) {
-                    console.error("Error setting up Firebase listeners:", error);
-                    console.log("Using local data only");
-                }
-            } else {
-                console.log("Using local data only (Firebase not available)");
-                showNotification("Working offline - data saved locally", 'info');
+                    
+                    console.log("✅ Gate passes loaded from cloud:", allGatePasses.length);
+                    renderGatePasses(allGatePasses);
+                    calculateAndRenderInventory(allGatePasses);
+                    
+                    if (allGatePasses.length > 0) {
+                        showNotification(`✅ ${allGatePasses.length} gate passes loaded from cloud`, 'success');
+                    }
+                }, (error) => {
+                    console.error("❌ Error fetching gate passes from cloud:", error);
+                    showNotification("❌ Failed to load gate passes from cloud", 'error');
+                });
+                
+            } catch (error) {
+                console.error("❌ Error setting up cloud listeners:", error);
+                showCloudOnlyError("Data listener setup");
             }
         }
 
-        // Load data from local storage
-        function loadLocalData() {
-            console.log("📱 Loading local data...");
+        // Cloud-only data loading (replaces local storage loading)
+        function loadCloudData() {
+            console.log("☁️ Loading data from cloud storage...");
             
-            // Load suppliers
-            const localSuppliers = loadFromLocalStorage('suppliers');
-            allSuppliers = localSuppliers.map(s => s.name);
-            console.log("Local suppliers loaded:", allSuppliers);
-            
-            // Load gate passes
-            const localGatePasses = loadFromLocalStorage('gate_passes');
-            allGatePasses = localGatePasses;
-            console.log("Local gate passes loaded:", allGatePasses.length);
-            
-            // Update UI
-            renderGatePasses(allGatePasses);
-            calculateAndRenderInventory(allGatePasses);
-            
-            if (allGatePasses.length > 0) {
-                showNotification(`${allGatePasses.length} gate passes loaded from local storage`, 'success');
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Data loading");
+                return;
             }
+            
+            // Load data from cloud
+            loadDataFromCloud();
         }
         
         // Function to render gate passes based on a given array (limited to last 5)
@@ -1220,6 +1322,7 @@
                     <p class="text-sm text-gray-700">Date: <span class="font-medium">${gatePass.date}</span></p>
                     <p class="text-sm text-gray-700">Party Weight: <span class="font-medium">${gatePass.partyWeight} quintal</span></p>
                     <p class="text-sm text-gray-700">Own Weight: <span class="font-medium">${gatePass.ownWeight} quintal</span></p>
+                    ${gatePass.remarks ? `<p class="text-sm text-gray-700 mt-2"><span class="font-medium">Remarks:</span> <span class="italic">${gatePass.remarks}</span></p>` : ''}
                 `;
 
                 // Container for buttons
@@ -1232,7 +1335,9 @@
                     const editButton = document.createElement('button');
                     editButton.textContent = 'Edit';
                     editButton.className = "p-2 bg-gray-500 text-white text-xs font-semibold rounded-lg hover:bg-gray-600 transition-colors duration-200";
-                    editButton.onclick = () => showEditModal(gatePass.id, gatePass);
+                    // Use firebaseId if available, otherwise use the regular id
+                    const actualDocId = gatePass.firebaseId || gatePass.id;
+                    editButton.onclick = () => showEditModal(actualDocId, gatePass);
                     buttonContainer.appendChild(editButton);
                 }
 
@@ -1242,7 +1347,9 @@
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
                     deleteButton.className = "p-2 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 transition-colors duration-200";
-                    deleteButton.onclick = () => deleteGatePass(gatePass.id);
+                    // Use firebaseId if available, otherwise use the regular id
+                    const actualDocId = gatePass.firebaseId || gatePass.id;
+                    deleteButton.onclick = () => deleteGatePass(actualDocId);
                     buttonContainer.appendChild(deleteButton);
                 }
 
@@ -1319,101 +1426,142 @@
             });
         }
 
-        function populateSupplierDropdown(input, dropdownList, suppliers) {
-            const query = input.value.toLowerCase().trim();
-            dropdownList.innerHTML = '';
+        // Populate supplier dropdowns with parties
+        function populateSupplierDropdowns() {
+            // Clear existing options
+            supplierSelect.innerHTML = '<option value="">Select a party...</option>';
+            editSupplierSelect.innerHTML = '<option value="">Select a party...</option>';
             
-            if (query.length === 0) {
-                dropdownList.classList.add('hidden');
-                return;
-            }
-
-            // Enhanced filtering with fuzzy matching
-            const filteredSuppliers = suppliers.filter(supplier => {
-                const supplierLower = supplier.toLowerCase();
+            // Add all suppliers as options
+            allSuppliers.forEach(supplier => {
+                const option1 = document.createElement('option');
+                option1.value = supplier;
+                option1.textContent = supplier;
+                supplierSelect.appendChild(option1);
                 
-                // Exact match gets highest priority
-                if (supplierLower === query) {
-                    return { supplier, score: 100 };
-                }
-                
-                // Starts with query gets high priority
-                if (supplierLower.startsWith(query)) {
-                    return { supplier, score: 90 };
-                }
-                
-                // Contains query gets medium priority
-                if (supplierLower.includes(query)) {
-                    return { supplier, score: 70 };
-                }
-                
-                // Fuzzy matching for partial matches
-                if (fuzzyMatch(query, supplierLower)) {
-                    return { supplier, score: 50 };
-                }
-                
-                return null;
-            }).filter(item => item !== null)
-              .sort((a, b) => b.score - a.score)
-              .map(item => item.supplier);
-
-            // Show all suppliers if no matches found and query is short
-            if (filteredSuppliers.length === 0 && query.length < 3) {
-                dropdownList.classList.add('hidden');
-                return;
-            }
-
-            // Add filtered suppliers
-            filteredSuppliers.forEach(supplier => {
-                const option = document.createElement('li');
-                option.className = "p-3 cursor-pointer hover:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0";
-                
-                // Highlight matching text
-                const highlightedSupplier = highlightMatch(supplier, query);
-                option.innerHTML = highlightedSupplier;
-                
-                option.onclick = () => {
-                    input.value = supplier;
-                    dropdownList.classList.add('hidden');
-                    input.focus(); // Keep focus on input
-                };
-                
-                // Add keyboard navigation
-                option.addEventListener('mouseenter', () => {
-                    // Remove previous selection
-                    dropdownList.querySelectorAll('li').forEach(li => li.classList.remove('bg-blue-50'));
-                    option.classList.add('bg-blue-50');
-                });
-                
-                dropdownList.appendChild(option);
+                const option2 = document.createElement('option');
+                option2.value = supplier;
+                option2.textContent = supplier;
+                editSupplierSelect.appendChild(option2);
             });
+        }
 
-            // Add "Add new supplier" option if no exact match
-            const exactMatch = suppliers.some(s => s.toLowerCase() === query);
-            if (!exactMatch && query.length > 0) {
-                const addOption = document.createElement('li');
-                addOption.className = "p-3 bg-blue-50 text-blue-700 font-semibold cursor-pointer border-t-2 border-blue-200 hover:bg-blue-100 transition-colors";
-                addOption.innerHTML = `
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Add new supplier: "${input.value}"
-                    </div>
-                `;
-                addOption.onclick = () => {
-                    input.value = input.value;
-                    dropdownList.classList.add('hidden');
-                    input.focus();
-                };
-                dropdownList.appendChild(addOption);
+        // Add new party (Admin only)
+        async function addNewParty() {
+            const partyName = newPartyName.value.trim();
+            
+            if (!partyName) {
+                showNotification("Please enter a party name", 'error');
+                return;
             }
+            
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Party creation");
+                return;
+            }
+            
+            // Check if party already exists
+            if (allSuppliers.includes(partyName)) {
+                showNotification("Party already exists", 'error');
+                return;
+            }
+            
+            try {
+                console.log("🔄 Adding new party to cloud storage...");
+                
+                const partyData = {
+                    name: partyName,
+                    createdAt: new Date().toISOString(),
+                    createdBy: userId || 'anonymous',
+                    createdByRole: userRole || 'admin'
+                };
+                
+                await addDoc(collection(db, 'suppliers'), partyData);
+                console.log("✅ New party added to cloud:", partyName);
+                
+                // Add to local array
+                allSuppliers.push(partyName);
+                
+                // Update dropdowns
+                populateSupplierDropdowns();
+                
+                // Update party list in admin view
+                renderPartyList();
+                
+                // Clear input
+                newPartyName.value = '';
+                
+                showNotification("✅ Party added successfully!", 'success');
+                
+            } catch (error) {
+                handleCloudError(error, "Party creation");
+            }
+        }
 
-            // Show dropdown if we have options
-            if (dropdownList.children.length > 0) {
-                dropdownList.classList.remove('hidden');
-            } else {
-                dropdownList.classList.add('hidden');
+        // Render party list in admin view
+        function renderPartyList() {
+            partyList.innerHTML = '';
+            
+            if (allSuppliers.length === 0) {
+                partyList.innerHTML = '<p class="text-gray-500 text-center">No parties found</p>';
+                return;
+            }
+            
+            allSuppliers.forEach(party => {
+                const partyItem = document.createElement('div');
+                partyItem.className = 'flex justify-between items-center p-2 bg-gray-50 rounded';
+                partyItem.innerHTML = `
+                    <span class="font-medium">${party}</span>
+                    <button onclick="deleteParty('${party}')" 
+                            class="text-red-600 hover:text-red-800 text-sm font-medium">
+                        Delete
+                    </button>
+                `;
+                partyList.appendChild(partyItem);
+            });
+        }
+
+        // Delete party (Admin only)
+        async function deleteParty(partyName) {
+            if (!confirm(`Are you sure you want to delete the party "${partyName}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Party deletion");
+                return;
+            }
+            
+            try {
+                console.log("🔄 Deleting party from cloud storage...");
+                
+                // Find the party document in Firebase
+                const suppliersRef = collection(db, 'suppliers');
+                const q = query(suppliersRef, where('name', '==', partyName));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    await deleteDoc(doc.ref);
+                    console.log("✅ Party deleted from cloud:", partyName);
+                }
+                
+                // Remove from local array
+                const index = allSuppliers.indexOf(partyName);
+                if (index > -1) {
+                    allSuppliers.splice(index, 1);
+                }
+                
+                // Update dropdowns
+                populateSupplierDropdowns();
+                
+                // Update party list in admin view
+                renderPartyList();
+                
+                showNotification("✅ Party deleted successfully!", 'success');
+                
+            } catch (error) {
+                handleCloudError(error, "Party deletion");
             }
         }
 
@@ -1439,130 +1587,25 @@
             return text.replace(regex, '<span class="font-semibold text-blue-600 bg-blue-100 px-1 rounded">$1</span>');
         }
 
-        // Handle input for main form supplier
-        supplierSearchInput.addEventListener('input', (e) => {
-            populateSupplierDropdown(e.target, supplierDropdownList, allSuppliers);
-        });
-
-        // Add keyboard navigation for supplier dropdown
-        supplierSearchInput.addEventListener('keydown', (e) => {
-            const dropdown = supplierDropdownList;
-            const options = dropdown.querySelectorAll('li');
-            const currentSelected = dropdown.querySelector('li.bg-blue-50');
-            let currentIndex = -1;
-            
-            if (currentSelected) {
-                currentIndex = Array.from(options).indexOf(currentSelected);
-            }
-            
-            switch (e.key) {
-                case 'ArrowDown':
-                    e.preventDefault();
-                    if (options.length > 0) {
-                        const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
-                        options.forEach(li => li.classList.remove('bg-blue-50'));
-                        options[nextIndex].classList.add('bg-blue-50');
-                    }
-                    break;
-                    
-                case 'ArrowUp':
-                    e.preventDefault();
-                    if (options.length > 0) {
-                        const prevIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
-                        options.forEach(li => li.classList.remove('bg-blue-50'));
-                        options[prevIndex].classList.add('bg-blue-50');
-                    }
-                    break;
-                    
-                case 'Enter':
-                    e.preventDefault();
-                    if (currentSelected) {
-                        currentSelected.click();
-                    }
-                    break;
-                    
-                case 'Escape':
-                    dropdown.classList.add('hidden');
-                    supplierSearchInput.blur();
-                    break;
-            }
-        });
-
-        // Handle click outside to close dropdown
-        document.addEventListener('click', (e) => {
-            if (!supplierSearchInput.parentElement.contains(e.target)) {
-                supplierDropdownList.classList.add('hidden');
-            }
-        });
+        // Note: Old supplier input event listeners removed - now using dropdown select
 
         // Show the edit modal with the selected gate pass's data
         function showEditModal(docId, gatePass) {
-            editGatePassIdInput.value = docId;
+            // Use firebaseId if available, otherwise use the passed docId
+            const actualDocId = gatePass.firebaseId || docId;
+            editGatePassIdInput.value = actualDocId;
             editGatepassTypeSelect.value = gatePass.type;
             editItemSelectInput.value = gatePass.item;
-            editSupplierSearchInput.value = gatePass.purchasedFrom;
+            editSupplierSelect.value = gatePass.purchasedFrom;
             editTruckNumberInput.value = gatePass.truckNumber;
             editDateInput.value = gatePass.date;
             editPartyWeightInput.value = gatePass.partyWeight;
             editOwnWeightInput.value = gatePass.ownWeight;
+            editRemarks.value = gatePass.remarks || '';
             editModal.style.display = 'flex';
         }
         
-        // Handle input for edit modal supplier
-        editSupplierSearchInput.addEventListener('input', (e) => {
-            populateSupplierDropdown(e.target, editSupplierDropdownList, allSuppliers);
-        });
-
-        // Add keyboard navigation for edit modal supplier dropdown
-        editSupplierSearchInput.addEventListener('keydown', (e) => {
-            const dropdown = editSupplierDropdownList;
-            const options = dropdown.querySelectorAll('li');
-            const currentSelected = dropdown.querySelector('li.bg-blue-50');
-            let currentIndex = -1;
-            
-            if (currentSelected) {
-                currentIndex = Array.from(options).indexOf(currentSelected);
-            }
-            
-            switch (e.key) {
-                case 'ArrowDown':
-                    e.preventDefault();
-                    if (options.length > 0) {
-                        const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
-                        options.forEach(li => li.classList.remove('bg-blue-50'));
-                        options[nextIndex].classList.add('bg-blue-50');
-                    }
-                    break;
-                    
-                case 'ArrowUp':
-                    e.preventDefault();
-                    if (options.length > 0) {
-                        const prevIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
-                        options.forEach(li => li.classList.remove('bg-blue-50'));
-                        options[prevIndex].classList.add('bg-blue-50');
-                    }
-                    break;
-                    
-                case 'Enter':
-                    e.preventDefault();
-                    if (currentSelected) {
-                        currentSelected.click();
-                    }
-                    break;
-                    
-                case 'Escape':
-                    dropdown.classList.add('hidden');
-                    editSupplierSearchInput.blur();
-                    break;
-            }
-        });
-
-        // Handle click outside to close edit modal dropdown
-        document.addEventListener('click', (e) => {
-            if (!editSupplierSearchInput.parentElement.contains(e.target) && !editModal.contains(e.target)) {
-                editSupplierDropdownList.classList.add('hidden');
-            }
-        });
+        // Note: Old edit modal supplier input event listeners removed - now using dropdown select
 
         // Hide the edit modal
         function hideEditModal() {
@@ -1595,15 +1638,32 @@
             // Get form data
             const type = gatepassTypeSelect.value;
             const item = document.getElementById('itemSelect').value;
-            const purchasedFrom = supplierSearchInput.value;
+            const purchasedFrom = supplierSelect.value;
             const truckNumber = document.getElementById('truckNumber').value;
             const date = document.getElementById('date').value;
             const partyWeight = parseFloat(document.getElementById('partyWeight').value);
             const ownWeight = parseFloat(document.getElementById('ownWeight').value);
+            const remarks = document.getElementById('remarks').value.trim();
 
             console.log("Form data:", { type, item, purchasedFrom, truckNumber, date, partyWeight, ownWeight });
 
-            // Always save to local storage first (immediate backup)
+            // Cloud-only storage: Check if Firebase is available
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Gate pass saving");
+                setSaveButtonLoading(false);
+                isSaving = false;
+                return;
+            }
+            
+            // Validate form data
+            const validationErrors = validateGatePassData({ type, item, purchasedFrom, truckNumber, date, partyWeight, ownWeight });
+            if (validationErrors.length > 0) {
+                showNotification(`❌ Validation failed: ${validationErrors.join(', ')}`, 'error');
+                setSaveButtonLoading(false);
+                isSaving = false;
+                return;
+            }
+
             const gatePassData = {
                 id: Date.now().toString(),
                 type,
@@ -1613,36 +1673,39 @@
                 date,
                 partyWeight,
                 ownWeight,
+                remarks: remarks || '',
                 userId: userId || 'anonymous',
                 userRole: userRole || 'user',
                 status: 'active',
                 createdAt: new Date().toISOString(),
-                savedToFirebase: false
+                savedToFirebase: true // Always true in cloud-only mode
             };
 
-            // Save to local storage immediately
+            // Save directly to Firebase (cloud-only)
             try {
-                const localData = loadFromLocalStorage('gate_passes');
-                localData.push(gatePassData);
-                saveToLocalStorage('gate_passes', localData);
-                console.log("✅ Saved to local storage successfully");
+                console.log("🔄 Saving gate pass to cloud storage...");
                 
-                // Also save supplier locally if new
+                // Save gate pass to Firebase
+                const docRef = await addDoc(collection(db, 'gate_passes'), gatePassData);
+                console.log("✅ Gate pass saved to Firebase with ID:", docRef.id);
+                
+                // Update gate pass data with Firebase ID
+                gatePassData.firebaseId = docRef.id;
+                
+                // Save supplier to Firebase if new
                 const supplierExists = allSuppliers.some(s => s === purchasedFrom);
                 if (!supplierExists) {
-                    const localSuppliers = loadFromLocalStorage('suppliers');
-                    if (!localSuppliers.some(s => s.name === purchasedFrom)) {
-                        localSuppliers.push({
-                            id: Date.now().toString(),
-                            name: purchasedFrom,
-                            createdAt: new Date().toISOString()
-                        });
-                        saveToLocalStorage('suppliers', localSuppliers);
-                        allSuppliers.push(purchasedFrom);
-                    }
+                    const supplierData = {
+                        name: purchasedFrom,
+                        createdAt: new Date().toISOString(),
+                        createdBy: userId || 'anonymous'
+                    };
+                    const supplierRef = await addDoc(collection(db, 'suppliers'), supplierData);
+                    console.log("✅ New supplier saved to Firebase:", supplierRef.id);
+                    allSuppliers.push(purchasedFrom);
                 }
                 
-                // Update UI immediately with local data (check for duplicates first)
+                // Update UI with cloud data
                 const existingEntry = allGatePasses.find(item => item.id === gatePassData.id);
                 if (!existingEntry) {
                     allGatePasses.push(gatePassData);
@@ -1650,195 +1713,157 @@
                     calculateAndRenderInventory(allGatePasses);
                 }
                 
-                // Reset form immediately
+                // Reset form
                 addGatePassForm.reset();
-                supplierDropdownList.classList.add('hidden');
+                supplierSelect.value = '';
+                remarks.value = '';
                 setSaveButtonLoading(false);
                 
-                showNotification("Gate pass saved successfully!", 'success');
-                console.log("=== SAVE COMPLETED SUCCESSFULLY ===");
+                showNotification("✅ Gate pass saved to cloud successfully!", 'success');
+                console.log("=== CLOUD SAVE COMPLETED SUCCESSFULLY ===");
                 
                 // Update sync status
                 updateSyncStatus();
-                
-                // Try to sync to Firebase in background (optional)
-                if (db && userAuthReady) {
-                    syncToFirebaseInBackground(gatePassData, purchasedFrom);
-                }
                 
                 // Reset the saving flag
                 isSaving = false;
                 
             } catch (error) {
-                console.error("Error saving gate pass:", error);
-                showNotification("Error saving gate pass. Please try again.", 'error');
+                handleCloudError(error, "Gate pass saving");
                 setSaveButtonLoading(false);
-                isSaving = false; // Reset flag on error too
+                isSaving = false;
             }
         }
 
-        // Background sync to Firebase (non-blocking)
-        async function syncToFirebaseInBackground(gatePassData, supplierName) {
+        // Cloud-only data loading functions
+        async function loadDataFromCloud() {
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Data loading");
+                return;
+            }
+
             try {
-                console.log("🔄 Attempting background sync to Firebase...");
-                console.log("Auth ready:", userAuthReady);
-                console.log("Current user:", auth?.currentUser?.uid);
-                console.log("Database ready:", !!db);
-                
-                // Check if Firebase is ready
-                if (!db || !auth) {
-                    throw new Error("Firebase not initialized");
-                }
+                console.log("🔄 Loading data from cloud storage...");
                 
                 // Ensure we're authenticated
                 if (!auth.currentUser) {
-                    console.log("🔑 Re-authenticating for sync...");
+                    console.log("🔑 Authenticating for data access...");
                     await signInAnonymously(auth);
-                    console.log("✅ Re-authentication successful");
+                    console.log("✅ Authentication successful");
                 }
                 
-                console.log("📤 Syncing supplier if new...");
-                // Add supplier if new
-                const supplierExists = allSuppliers.some(s => s === supplierName);
-                if (!supplierExists) {
-                    const supplierDoc = await addDoc(collection(db, 'suppliers'), { 
-                        name: supplierName,
-                        createdAt: new Date(),
-                        createdBy: userId || auth.currentUser.uid
-                    });
-                    console.log("✅ Supplier synced to Firebase with ID:", supplierDoc.id);
-                } else {
-                    console.log("ℹ️ Supplier already exists, skipping");
-                }
-
-                console.log("📤 Syncing gate pass...");
-                // Add gate pass with the same ID as local storage
-                const docRef = await setDoc(doc(db, 'gate_passes', gatePassData.id), {
-                    type: gatePassData.type,
-                    item: gatePassData.item,
-                    purchasedFrom: gatePassData.purchasedFrom,
-                    truckNumber: gatePassData.truckNumber,
-                    date: gatePassData.date,
-                    partyWeight: gatePassData.partyWeight,
-                    ownWeight: gatePassData.ownWeight,
-                    createdAt: new Date(),
-                    userId: gatePassData.userId || auth.currentUser.uid,
-                    userRole: gatePassData.userRole || 'user',
-                    status: 'active'
+                // Load gate passes from Firebase
+                const gatePassesSnapshot = await getDocs(collection(db, 'gate_passes'));
+                allGatePasses.length = 0; // Clear existing data
+                
+                gatePassesSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    data.firebaseId = doc.id;
+                    allGatePasses.push(data);
                 });
                 
-                console.log("✅ Gate pass synced to Firebase with ID:", gatePassData.id);
+                console.log(`✅ Loaded ${allGatePasses.length} gate passes from cloud`);
                 
-                // Update local storage to mark as synced
-                const localData = loadFromLocalStorage('gate_passes');
-                const item = localData.find(item => item.id === gatePassData.id);
-                if (item) {
-                    item.savedToFirebase = true;
-                    item.firebaseId = gatePassData.id; // Same ID now
-                    saveToLocalStorage('gate_passes', localData);
-                    console.log("✅ Local data marked as synced");
-                }
+                // Load suppliers from Firebase
+                const suppliersSnapshot = await getDocs(collection(db, 'suppliers'));
+                allSuppliers.length = 0; // Clear existing data
                 
-                showNotification("Data synced to cloud successfully!", 'success');
+                suppliersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    allSuppliers.push(data.name);
+                });
+                
+                console.log(`✅ Loaded ${allSuppliers.length} suppliers from cloud`);
+                
+                // Update UI with cloud data
+                renderGatePasses(allGatePasses);
+                calculateAndRenderInventory(allGatePasses);
+                
+                // Update dropdowns
+                populateSupplierDropdowns();
+                
+                showNotification("✅ Data loaded from cloud successfully!", 'success');
                 
             } catch (error) {
-                console.error("❌ Background sync to Firebase failed:", error);
-                console.error("Error code:", error.code);
-                console.error("Error message:", error.message);
-                
-                if (error.code === 'permission-denied') {
-                    console.error("🚫 Permission denied - Check Firebase Security Rules");
-                    showNotification("Sync failed: Permission denied. Check database configuration.", 'error');
-                } else if (error.code === 'unavailable') {
-                    console.error("🌐 Firebase service unavailable");
-                    showNotification("Sync failed: Firebase service unavailable.", 'error');
-                } else if (error.message.includes('not initialized')) {
-                    console.error("🔧 Firebase not properly initialized");
-                    showNotification("Sync failed: Database not ready.", 'error');
-                } else {
-                    console.error("🔥 Other Firebase error");
-                    showNotification(`Sync failed: ${error.message}`, 'error');
-                }
-                
-                console.log("📱 Data remains saved locally and will sync when connection improves");
-                updateSyncStatus();
+                handleCloudError(error, "Data loading");
             }
         }
 
-        // Update sync status display
+        // Cloud-only sync status display
         function updateSyncStatus() {
-            const localData = loadFromLocalStorage('gate_passes');
-            const unsyncedCount = localData.filter(item => !item.savedToFirebase).length;
-            
-            if (unsyncedCount > 0) {
-                syncStatusText.textContent = `${unsyncedCount} records pending sync`;
-                manualSyncBtn.classList.remove('hidden');
-            } else {
-                syncStatusText.textContent = "All data synced";
+            if (isCloudStorageAvailable()) {
+                syncStatusText.textContent = "Cloud storage connected";
                 manualSyncBtn.classList.add('hidden');
+            } else {
+                syncStatusText.textContent = "Cloud storage unavailable";
+                manualSyncBtn.classList.remove('hidden');
             }
         }
 
-        // Manual sync function
+        // Manual data refresh function (cloud-only)
         async function manualSync() {
-            console.log("🔄 Manual sync requested...");
+            console.log("🔄 Manual data refresh requested...");
             manualSyncBtn.disabled = true;
-            manualSyncBtn.textContent = "Syncing...";
+            manualSyncBtn.textContent = "Refreshing...";
             
             try {
-                const localData = loadFromLocalStorage('gate_passes');
-                const unsyncedItems = localData.filter(item => !item.savedToFirebase);
-                
-                console.log(`📤 Found ${unsyncedItems.length} unsynced items`);
-                
-                for (const item of unsyncedItems) {
-                    await syncToFirebaseInBackground(item, item.purchasedFrom);
-                    // Small delay between syncs
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-                
-                showNotification("Manual sync completed successfully!", 'success');
+                await loadDataFromCloud();
+                showNotification("Data refreshed from cloud successfully!", 'success');
                 
             } catch (error) {
-                console.error("Manual sync failed:", error);
-                showNotification("Manual sync failed. Please try again.", 'error');
+                console.error("Data refresh failed:", error);
+                showNotification("Data refresh failed. Please check your connection.", 'error');
             } finally {
                 manualSyncBtn.disabled = false;
-                manualSyncBtn.textContent = "Retry Sync";
+                manualSyncBtn.textContent = "Refresh Data";
                 updateSyncStatus();
             }
         }
 
-        // Save edited gate pass to Firestore
+        // Save edited gate pass to Firestore (Cloud-only)
         async function saveEdit(event) {
             event.preventDefault();
-            if (!userAuthReady || !db) {
-                console.error("User not authenticated or database not ready.");
+            
+            // Cloud-only validation
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Gate pass update");
                 return;
             }
 
             const docId = editGatePassIdInput.value;
             const type = editGatepassTypeSelect.value;
             const item = editItemSelectInput.value;
-            const purchasedFrom = editSupplierSearchInput.value;
+            const purchasedFrom = editSupplierSelect.value;
             const truckNumber = editTruckNumberInput.value;
             const date = editDateInput.value;
             const partyWeight = parseFloat(editPartyWeightInput.value);
             const ownWeight = parseFloat(editOwnWeightInput.value);
+            const remarks = editRemarks.value.trim();
 
-            // Check if the supplier is new and add it to the database
-            const supplierExists = allSuppliers.some(s => s === purchasedFrom);
-            if (!supplierExists) {
-                try {
-                    await addDoc(collection(db, 'suppliers'), { name: purchasedFrom });
-                    console.log("New supplier added:", purchasedFrom);
-                } catch (e) {
-                    console.error("Error adding new supplier:", e);
-                    return;
-                }
+            // Validate form data
+            const validationErrors = validateGatePassData({ type, item, purchasedFrom, truckNumber, date, partyWeight, ownWeight });
+            if (validationErrors.length > 0) {
+                showNotification(`❌ Validation failed: ${validationErrors.join(', ')}`, 'error');
+                return;
             }
 
             try {
+                console.log("🔄 Updating gate pass in cloud storage...");
+                
+                // Check if the supplier is new and add it to the database
+                const supplierExists = allSuppliers.some(s => s === purchasedFrom);
+                if (!supplierExists) {
+                    const supplierData = {
+                        name: purchasedFrom,
+                        createdAt: new Date().toISOString(),
+                        createdBy: userId || 'anonymous'
+                    };
+                    await addDoc(collection(db, 'suppliers'), supplierData);
+                    console.log("✅ New supplier added to cloud:", purchasedFrom);
+                    allSuppliers.push(purchasedFrom);
+                }
+
+                // Update gate pass in Firebase
                 const gatePassRef = doc(db, 'gate_passes', docId);
                 await updateDoc(gatePassRef, {
                     type,
@@ -1848,30 +1873,46 @@
                     date,
                     partyWeight,
                     ownWeight,
-                    updatedAt: new Date(),
-                    updatedBy: userId
+                    remarks: remarks || '',
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: userId || 'anonymous'
                 });
-                console.log("Gate pass updated:", docId);
+                
+                console.log("✅ Gate pass updated in cloud:", docId);
                 hideEditModal();
                 editSupplierDropdownList.classList.add('hidden');
-            } catch (e) {
-                console.error("Error updating document:", e);
-                alert("Error updating gate pass. Please try again.");
+                
+                showNotification("✅ Gate pass updated successfully!", 'success');
+                
+            } catch (error) {
+                handleCloudError(error, "Gate pass update");
             }
         }
 
-        // Delete gate pass from Firestore
+        // Delete gate pass from Firestore (Cloud-only)
         async function deleteGatePass(docId) {
-            if (!userAuthReady || !db) {
-                console.error("User not authenticated or database not ready.");
+            // Cloud-only validation
+            if (!isCloudStorageAvailable()) {
+                showCloudOnlyError("Gate pass deletion");
                 return;
             }
+            
+            // Confirm deletion
+            if (!confirm("Are you sure you want to delete this gate pass? This action cannot be undone.")) {
+                return;
+            }
+            
             try {
+                console.log("🔄 Deleting gate pass from cloud storage...");
+                
+                // Delete from Firebase
                 await deleteDoc(doc(db, 'gate_passes', docId));
-                console.log("Gate pass deleted:", docId);
-            } catch (e) {
-                console.error("Error deleting document:", e);
-                alert("Error deleting gate pass. Please try again.");
+                console.log("✅ Gate pass deleted from cloud:", docId);
+                
+                showNotification("✅ Gate pass deleted successfully!", 'success');
+                
+            } catch (error) {
+                handleCloudError(error, "Gate pass deletion");
             }
         }
         
@@ -1960,6 +2001,7 @@
                 adminViewBtn.classList.add('bg-blue-600', 'text-white');
                 adminViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
                 updateAdminStats();
+                renderPartyList();
             } else {
                 mainView.classList.remove('hidden');
                 recordViewBtn.classList.add('bg-blue-600', 'text-white');
@@ -2184,11 +2226,21 @@
         reportsViewBtn.addEventListener('click', () => toggleView('reports'));
         adminViewBtn.addEventListener('click', () => toggleView('admin'));
         
+        // Party management event listeners
+        addPartyBtn.addEventListener('click', addNewParty);
+        newPartyName.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addNewParty();
+            }
+        });
+        
         // Initialize app
         window.onload = () => {
             showLoginModal();
             // Initialize date picker functionality after DOM is loaded
             setupDatePicker();
+            // Initialize network monitoring
+            initializeNetworkMonitoring();
             // Clean up any existing duplicates on app load
             setTimeout(() => {
                 removeDuplicateGatePasses();
@@ -2197,4 +2249,5 @@
     </script>
 </body>
 </html>
+
 
