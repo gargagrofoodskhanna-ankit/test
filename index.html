@@ -1196,8 +1196,8 @@
                 adminViewBtn.classList.add('hidden');
             }
 
-            // Show/hide reports button based on role (only admin can see reports)
-            if (userRole === 'admin') {
+            // Show/hide reports button based on role (admin and user2 can see reports)
+            if (userRole === 'admin' || userRole === 'user2') {
                 reportsViewBtn.classList.remove('hidden');
             } else {
                 reportsViewBtn.classList.add('hidden');
@@ -1208,8 +1208,8 @@
         }
 
         function updateFormPermissions() {
-            const canAdd = userRole === 'admin' || userRole === 'user1';
-            const canEdit = userRole === 'admin' || userRole === 'user1';
+            const canAdd = userRole === 'admin' || userRole === 'user1' || userRole === 'user2';
+            const canEdit = userRole === 'admin' || userRole === 'user1' || userRole === 'user2';
             const canDelete = userRole === 'admin';
 
             // Enable/disable add form
@@ -1394,7 +1394,7 @@
                 buttonContainer.className = "flex gap-2 self-end sm:self-center";
 
                 // Edit button (role-based)
-                const canEdit = userRole === 'admin' || userRole === 'user1';
+                const canEdit = userRole === 'admin' || userRole === 'user1' || userRole === 'user2';
                 if (canEdit) {
                     const editButton = document.createElement('button');
                     editButton.textContent = 'Edit';
