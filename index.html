@@ -756,8 +756,9 @@
                 errors.push('Date is required');
             }
             
-            if (isNaN(formData.partyWeight) || formData.partyWeight <= 0) {
-                errors.push('Valid party weight is required');
+            // Only require party weight for incoming items
+            if (formData.type === 'Incoming' && (isNaN(formData.partyWeight) || formData.partyWeight <= 0)) {
+                errors.push('Valid party weight is required for incoming items');
             }
             
             if (isNaN(formData.ownWeight) || formData.ownWeight <= 0) {
@@ -873,6 +874,38 @@
         const remarks = document.getElementById('remarks');
         const editGatepassTypeSelect = document.getElementById('editGatepassTypeSelect');
         const cancelEditButton = document.getElementById('cancelEditButton');
+
+        // Function to toggle party weight field visibility based on gate pass type
+        function togglePartyWeightField() {
+            const gatePassType = gatepassTypeSelect.value;
+            const partyWeightField = document.getElementById('partyWeight');
+            const partyWeightContainer = partyWeightField.parentElement;
+            
+            if (gatePassType === 'Outgoing') {
+                partyWeightContainer.style.display = 'none';
+                partyWeightField.required = false;
+                partyWeightField.value = ''; // Clear the value
+            } else {
+                partyWeightContainer.style.display = 'block';
+                partyWeightField.required = true;
+            }
+        }
+        
+        // Function to toggle edit modal party weight field visibility
+        function toggleEditPartyWeightField() {
+            const gatePassType = editGatepassTypeSelect.value;
+            const editPartyWeightField = document.getElementById('editPartyWeight');
+            const editPartyWeightContainer = editPartyWeightField.parentElement;
+            
+            if (gatePassType === 'Outgoing') {
+                editPartyWeightContainer.style.display = 'none';
+                editPartyWeightField.required = false;
+                editPartyWeightField.value = ''; // Clear the value
+            } else {
+                editPartyWeightContainer.style.display = 'block';
+                editPartyWeightField.required = true;
+            }
+        }
 
         // Notification Functions
         function showNotification(message, type = 'success') {
@@ -1320,7 +1353,7 @@
                     <p class="text-sm text-gray-700">Purchased From: <span class="font-medium">${gatePass.purchasedFrom}</span></p>
                     <p class="text-sm text-gray-700">Truck: <span class="font-medium">${gatePass.truckNumber}</span></p>
                     <p class="text-sm text-gray-700">Date: <span class="font-medium">${gatePass.date}</span></p>
-                    <p class="text-sm text-gray-700">Party Weight: <span class="font-medium">${gatePass.partyWeight} quintal</span></p>
+                    ${gatePass.type === 'Incoming' ? `<p class="text-sm text-gray-700">Party Weight: <span class="font-medium">${gatePass.partyWeight} quintal</span></p>` : ''}
                     <p class="text-sm text-gray-700">Own Weight: <span class="font-medium">${gatePass.ownWeight} quintal</span></p>
                     ${gatePass.remarks ? `<p class="text-sm text-gray-700 mt-2"><span class="font-medium">Remarks:</span> <span class="italic">${gatePass.remarks}</span></p>` : ''}
                 `;
@@ -1599,9 +1632,13 @@
             editSupplierSelect.value = gatePass.purchasedFrom;
             editTruckNumberInput.value = gatePass.truckNumber;
             editDateInput.value = gatePass.date;
-            editPartyWeightInput.value = gatePass.partyWeight;
+            editPartyWeightInput.value = gatePass.partyWeight || '';
             editOwnWeightInput.value = gatePass.ownWeight;
             editRemarks.value = gatePass.remarks || '';
+            
+            // Toggle party weight field visibility based on type
+            toggleEditPartyWeightField();
+            
             editModal.style.display = 'flex';
         }
         
@@ -1641,7 +1678,7 @@
             const purchasedFrom = supplierSelect.value;
             const truckNumber = document.getElementById('truckNumber').value;
             const date = document.getElementById('date').value;
-            const partyWeight = parseFloat(document.getElementById('partyWeight').value);
+            const partyWeight = type === 'Outgoing' ? null : parseFloat(document.getElementById('partyWeight').value);
             const ownWeight = parseFloat(document.getElementById('ownWeight').value);
             const remarks = document.getElementById('remarks').value.trim();
 
@@ -1716,7 +1753,7 @@
                 // Reset form
                 addGatePassForm.reset();
                 supplierSelect.value = '';
-                remarks.value = '';
+                document.getElementById('remarks').value = '';
                 setSaveButtonLoading(false);
                 
                 showNotification("✅ Gate pass saved to cloud successfully!", 'success');
@@ -1836,7 +1873,7 @@
             const purchasedFrom = editSupplierSelect.value;
             const truckNumber = editTruckNumberInput.value;
             const date = editDateInput.value;
-            const partyWeight = parseFloat(editPartyWeightInput.value);
+            const partyWeight = type === 'Outgoing' ? null : parseFloat(editPartyWeightInput.value);
             const ownWeight = parseFloat(editOwnWeightInput.value);
             const remarks = editRemarks.value.trim();
 
@@ -1952,10 +1989,12 @@
                                 <p style="font-size: 0.875rem; color: #6b7280;">Truck Number</p>
                                 <p style="font-weight: 500; color: #1f2937;">${gatePass.truckNumber}</p>
                             </div>
+                            ${gatePass.type === 'Incoming' ? `
                             <div>
                                 <p style="font-size: 0.875rem; color: #6b7280;">Party Weight</p>
                                 <p style="font-weight: 500; color: #1f2937;">${gatePass.partyWeight} quintal</p>
                             </div>
+                            ` : ''}
                             <div>
                                 <p style="font-size: 0.875rem; color: #6b7280;">Own Weight</p>
                                 <p style="font-weight: 500; color: #1f2937;">${gatePass.ownWeight} quintal</p>
@@ -2245,6 +2284,15 @@
             setTimeout(() => {
                 removeDuplicateGatePasses();
             }, 2000);
+            
+            // Add event listeners for gate pass type changes
+            gatepassTypeSelect.addEventListener('change', function() {
+                togglePartyWeightField();
+            });
+            
+            editGatepassTypeSelect.addEventListener('change', function() {
+                toggleEditPartyWeightField();
+            });
         };
     </script>
 </body>
