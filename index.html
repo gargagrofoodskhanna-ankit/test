@@ -258,9 +258,39 @@
 
             <!-- Reports View -->
             <div id="reportsView" class="hidden">
-                <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Inventory Report</h2>
-                <div id="inventoryReport" class="space-y-6">
-                    <!-- Report summary will be rendered here by JavaScript -->
+                <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Gate Pass Reports</h2>
+                
+                <!-- Gate Passes Table Section -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">All Gate Passes</h3>
+                            <span id="gatePassCount" class="text-sm text-gray-600">0 gate passes</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Table Container -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Party/Supplier</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Truck No.</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Party Weight</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Own Weight</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gatePassTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Table rows will be rendered here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -847,7 +877,8 @@
         const addPartyBtn = document.getElementById('addPartyBtn');
         const partyList = document.getElementById('partyList');
         const gatepassTypeSelect = document.getElementById('gatepassTypeSelect');
-        const inventoryReport = document.getElementById('inventoryReport');
+        const gatePassTableBody = document.getElementById('gatePassTableBody');
+        const gatePassCount = document.getElementById('gatePassCount');
         const notification = document.getElementById('notification');
         const notificationMessage = document.getElementById('notificationMessage');
         const notificationIcon = document.getElementById('notificationIcon');
@@ -1109,7 +1140,7 @@
             
             // Clear UI displays
             gatePassList.innerHTML = '';
-            inventoryReport.innerHTML = '';
+            gatePassTableBody.innerHTML = '';
             
             // Sign out from Firebase if authenticated
             if (auth && auth.currentUser) {
@@ -1295,7 +1326,7 @@
                     
                     console.log("✅ Gate passes loaded from cloud:", allGatePasses.length);
                     renderGatePasses(allGatePasses);
-                    calculateAndRenderInventory(allGatePasses);
+                    renderGatePassTable(allGatePasses);
                     
                     if (allGatePasses.length > 0) {
                         showNotification(`✅ ${allGatePasses.length} gate passes loaded from cloud`, 'success');
@@ -1419,45 +1450,80 @@
                 }
             });
 
-            renderInventoryReport(inventory);
+            renderGatePassTable(allGatePasses);
         }
         
-        function renderInventoryReport(inventory) {
-            inventoryReport.innerHTML = ''; // Clear previous report
-            const itemTypes = Object.keys(inventory);
 
-            if (itemTypes.length === 0) {
-                inventoryReport.innerHTML = '<p class="text-center text-gray-500">No inventory data available. Add some gate passes to see the report.</p>';
+        // Function to render gate passes in table format
+        function renderGatePassTable(gatePasses) {
+            gatePassTableBody.innerHTML = '';
+            gatePassCount.textContent = `${gatePasses.length} gate passes`;
+
+            if (gatePasses.length === 0) {
+                gatePassTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+                            No gate passes found. Add some gate passes to see the report.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            itemTypes.forEach(item => {
-                const itemData = inventory[item];
-                const netInventory = itemData.incoming - itemData.outgoing;
-                const netColor = netInventory >= 0 ? 'text-green-600' : 'text-red-600';
+            // Sort by creation date (newest first)
+            const sortedPasses = [...gatePasses].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            sortedPasses.forEach((gatePass) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
                 
-                const itemReportDiv = document.createElement('div');
-                itemReportDiv.className = 'bg-gray-100 p-4 rounded-lg shadow-sm';
-                itemReportDiv.innerHTML = `
-                    <h3 class="text-lg font-bold text-gray-800">${item}</h3>
-                    <div class="grid grid-cols-2 gap-4 mt-2 text-sm">
-                        <div class="bg-white p-3 rounded-lg shadow-sm">
-                            <p class="text-gray-600">Total Incoming</p>
-                            <p class="font-semibold text-green-600">${itemData.incoming.toLocaleString()} quintal</p>
-                        </div>
-                        <div class="bg-white p-3 rounded-lg shadow-sm">
-                            <p class="text-gray-600">Total Outgoing</p>
-                            <p class="font-semibold text-red-600">${itemData.outgoing.toLocaleString()} quintal</p>
-                        </div>
-                    </div>
-                    <div class="bg-white p-3 rounded-lg shadow-sm mt-4">
-                        <p class="text-gray-600">Net Inventory</p>
-                        <p class="font-bold text-xl ${netColor}">${netInventory.toLocaleString()} quintal</p>
-                    </div>
+                // Format creation date
+                const createdDate = new Date(gatePass.createdAt).toLocaleString();
+                
+                // Get user display name
+                const userDisplay = gatePass.userId && gatePass.userId !== 'anonymous' ? 
+                    `${gatePass.userId} (${gatePass.userRole || 'user'})` : 
+                    'Anonymous User';
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${gatePass.type === 'Incoming' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${gatePass.type}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${gatePass.item}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${gatePass.purchasedFrom}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${gatePass.truckNumber}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${gatePass.date}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${gatePass.type === 'Incoming' ? `${gatePass.partyWeight} quintal` : '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${gatePass.ownWeight} quintal
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title="${gatePass.remarks || ''}">
+                        ${gatePass.remarks || '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${userDisplay}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${createdDate}
+                    </td>
                 `;
-                inventoryReport.appendChild(itemReportDiv);
+                
+                gatePassTableBody.appendChild(row);
             });
         }
+
 
         // Populate supplier dropdowns with parties
         function populateSupplierDropdowns() {
@@ -1801,6 +1867,9 @@
                 
                 console.log(`✅ Loaded ${allGatePasses.length} gate passes from cloud`);
                 
+                // Render the table
+                renderGatePassTable(allGatePasses);
+                
                 // Load suppliers from Firebase
                 const suppliersSnapshot = await getDocs(collection(db, 'suppliers'));
                 allSuppliers.length = 0; // Clear existing data
@@ -2035,6 +2104,8 @@
                 reportsView.classList.remove('hidden');
                 reportsViewBtn.classList.add('bg-blue-600', 'text-white');
                 reportsViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+                // Refresh reports data when switching to reports view
+                renderGatePassTable(allGatePasses);
             } else if (view === 'admin') {
                 adminView.classList.remove('hidden');
                 adminViewBtn.classList.add('bg-blue-600', 'text-white');
@@ -2272,6 +2343,7 @@
                 addNewParty();
             }
         });
+        
         
         // Initialize app
         window.onload = () => {
