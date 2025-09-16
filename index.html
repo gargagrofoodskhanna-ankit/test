@@ -260,6 +260,26 @@
             <div id="reportsView" class="hidden">
                 <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Gate Pass Reports</h2>
                 
+                <!-- Outgoing Gate Pass Details Section -->
+                <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Outgoing Gate Pass Details Management</h3>
+                    
+                    <!-- Filter for outgoing gate passes -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Outgoing Gate Passes</label>
+                        <select id="outgoingFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Outgoing Gate Passes</option>
+                            <option value="incomplete">Incomplete Details</option>
+                            <option value="complete">Complete Details</option>
+                        </select>
+                    </div>
+                    
+                    <!-- List of outgoing gate passes with edit capability -->
+                    <div id="outgoingGatePassList" class="space-y-4">
+                        <!-- Dynamic list items will be populated here -->
+                    </div>
+                </div>
+                
                 <!-- Gate Passes Table Section -->
                 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200">
@@ -282,6 +302,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Party Weight</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Own Weight</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
                                 </tr>
@@ -298,6 +319,76 @@
             <div id="adminView" class="hidden">
                 <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Admin Panel</h2>
                 <div class="space-y-6">
+                    <!-- Due Payments Management -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-semibold mb-4">Due Payments Management</h3>
+                        
+                        <!-- Summary Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                            <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                                <h4 class="text-sm font-medium text-red-800">Overdue</h4>
+                                <p id="overdueAmount" class="text-2xl font-bold text-red-900">₹0</p>
+                                <p id="overdueCount" class="text-xs text-red-600">0 payments</p>
+                            </div>
+                            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                <h4 class="text-sm font-medium text-yellow-800">Pending</h4>
+                                <p id="pendingAmount" class="text-2xl font-bold text-yellow-900">₹0</p>
+                                <p id="pendingCount" class="text-xs text-yellow-600">0 payments</p>
+                            </div>
+                            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                                <h4 class="text-sm font-medium text-orange-800">Partial</h4>
+                                <p id="partialAmount" class="text-2xl font-bold text-orange-900">₹0</p>
+                                <p id="partialCount" class="text-xs text-orange-600">0 payments</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <h4 class="text-sm font-medium text-green-800">Received</h4>
+                                <p id="receivedAmount" class="text-2xl font-bold text-green-900">₹0</p>
+                                <p id="receivedCount" class="text-xs text-green-600">0 payments</p>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h4 class="text-sm font-medium text-blue-800">Total</h4>
+                                <p id="totalAmount" class="text-2xl font-bold text-blue-900">₹0</p>
+                                <p id="totalCount" class="text-xs text-blue-600">0 payments</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter Options -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <select id="paymentStatusFilter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">All Payments</option>
+                                <option value="pending">Pending Payments</option>
+                                <option value="partial">Partial Payments</option>
+                                <option value="overdue">Overdue Payments</option>
+                                <option value="received">Fully Received</option>
+                            </select>
+                            <select id="brokerFilter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">All Brokers</option>
+                            </select>
+                            <input type="date" id="dueDateFilter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Filter by due date">
+                        </div>
+                        
+                        <!-- Due Payments Table -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gate Pass ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sold To</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Broker</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (₹)</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="duePaymentsTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Dynamic rows will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <!-- User Management -->
                     <div class="bg-gray-100 p-4 rounded-lg">
                         <h3 class="text-lg font-semibold mb-3">User Management</h3>
@@ -378,6 +469,150 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Payment Status Modal -->
+    <div id="paymentStatusModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Update Payment Status</h2>
+            <form id="paymentStatusForm">
+                <input type="hidden" id="paymentGatePassId">
+                
+                <!-- Gate Pass Info (read-only) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Gate Pass ID</label>
+                        <input type="text" id="paymentGatePassIdDisplay" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Amount</label>
+                        <input type="text" id="paymentAmountDisplay" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Broker</label>
+                        <input type="text" id="paymentBrokerDisplay" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Due Date</label>
+                        <input type="text" id="paymentDueDateDisplay" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                </div>
+                
+                <!-- Payment History Section -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold mb-3">Payment History</h4>
+                    <div id="paymentHistoryList" class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                        <!-- Payment history items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Add New Payment Section -->
+                <div class="border-t pt-4">
+                    <h4 class="text-lg font-semibold mb-3">Add New Payment</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="paymentReceivedDate" class="block text-sm font-medium text-gray-700">Payment Received Date</label>
+                            <input type="date" id="paymentReceivedDate" class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="amountReceived" class="block text-sm font-medium text-gray-700">Amount Received (₹)</label>
+                            <input type="number" id="amountReceived" step="0.01" min="0" placeholder="Enter amount received" class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="remainingAmount" class="block text-sm font-medium text-gray-700">Remaining Amount (₹)</label>
+                            <input type="text" id="remainingAmount" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                        </div>
+                        <div>
+                            <label for="paymentStatus" class="block text-sm font-medium text-gray-700">Current Status</label>
+                            <input type="text" id="paymentStatusDisplay" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="paymentNotes" class="block text-sm font-medium text-gray-700">Payment Notes (Optional)</label>
+                            <textarea id="paymentNotes" rows="2" placeholder="Enter any notes about this payment..." class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancelPaymentStatus" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Update Status
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Outgoing Details Modal -->
+    <div id="outgoingDetailsModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Edit Outgoing Gate Pass Details</h2>
+            <form id="outgoingDetailsForm">
+                <!-- Basic info (read-only) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Gate Pass ID</label>
+                        <input type="text" id="outgoingGatePassId" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Item</label>
+                        <input type="text" id="outgoingItem" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Sold To</label>
+                        <input type="text" id="outgoingSoldTo" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Truck Number</label>
+                        <input type="text" id="outgoingTruckNumber" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Own Weight (quintal)</label>
+                        <input type="text" id="outgoingOwnWeight" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="text" id="outgoingDate" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                </div>
+                
+                <!-- Additional outgoing fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="outgoingItemRate" class="block text-sm font-medium text-gray-700">Rate per Quintal (₹)</label>
+                        <input type="number" id="outgoingItemRate" step="0.01" min="0" required
+                               class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="outgoingBrokerName" class="block text-sm font-medium text-gray-700">Broker Name</label>
+                        <input type="text" id="outgoingBrokerName" required
+                               class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="outgoingPartyWeight" class="block text-sm font-medium text-gray-700">Party Weight (quintal)</label>
+                        <input type="number" id="outgoingPartyWeight" step="0.01" min="0" required
+                               class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="outgoingPaymentDueDays" class="block text-sm font-medium text-gray-700">Payment Due (Days)</label>
+                        <input type="number" id="outgoingPaymentDueDays" placeholder="Enter days" min="1" max="365" required
+                               class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Number of days from gate pass date</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancelOutgoingDetails" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Save Details
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1462,7 +1697,7 @@
             if (gatePasses.length === 0) {
                 gatePassTableBody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="11" class="px-6 py-8 text-center text-gray-500">
                             No gate passes found. Add some gate passes to see the report.
                         </td>
                     </tr>
@@ -1511,6 +1746,13 @@
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title="${gatePass.remarks || ''}">
                         ${gatePass.remarks || '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${gatePass.type === 'Outgoing' ? 
+                            (isOutgoingDetailsComplete(gatePass) ? 
+                                '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Complete</span>' : 
+                                '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Incomplete</span>') : 
+                            '<span class="text-gray-400">-</span>'}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ${userDisplay}
@@ -2042,7 +2284,7 @@
                             </div>
                         </div>
                         <div style="border-top: 1px dashed #d1d5db; padding-top: 1rem; margin-top: 1rem;">
-                            <p style="font-size: 0.875rem; color: #6b7280;">Supplier</p>
+                            <p style="font-size: 0.875rem; color: #6b7280;">${gatePass.type === 'Outgoing' ? 'Sold To' : 'Supplier'}</p>
                             <p style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem;">${gatePass.purchasedFrom}</p>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
@@ -2068,6 +2310,24 @@
                                 <p style="font-size: 0.875rem; color: #6b7280;">Own Weight</p>
                                 <p style="font-weight: 500; color: #1f2937;">${gatePass.ownWeight} quintal</p>
                             </div>
+                            ${gatePass.type === 'Outgoing' && gatePass.itemRate ? `
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Rate per Quintal</p>
+                                <p style="font-weight: 500; color: #1f2937;">₹${gatePass.itemRate}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Broker Name</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.brokerName}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Party Weight</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.outgoingPartyWeight} quintal</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: #6b7280;">Payment Due</p>
+                                <p style="font-weight: 500; color: #1f2937;">${gatePass.paymentDueDays} days (${gatePass.paymentDueDate || 'Calculating...'})</p>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                     <div style="margin-top: 1.5rem; text-align: center; font-size: 0.75rem; color: #9ca3af;">
@@ -2106,12 +2366,14 @@
                 reportsViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
                 // Refresh reports data when switching to reports view
                 renderGatePassTable(allGatePasses);
+                loadOutgoingGatePasses();
             } else if (view === 'admin') {
                 adminView.classList.remove('hidden');
                 adminViewBtn.classList.add('bg-blue-600', 'text-white');
                 adminViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
                 updateAdminStats();
                 renderPartyList();
+                loadDuePayments();
             } else {
                 mainView.classList.remove('hidden');
                 recordViewBtn.classList.add('bg-blue-600', 'text-white');
@@ -2345,6 +2607,9 @@
         });
         
         
+        // Make allGatePasses globally accessible
+        window.allGatePasses = allGatePasses;
+        
         // Initialize app
         window.onload = () => {
             showLoginModal();
@@ -2364,6 +2629,574 @@
             
             editGatepassTypeSelect.addEventListener('change', function() {
                 toggleEditPartyWeightField();
+            });
+
+            // Outgoing Details Management Functions
+            function loadOutgoingGatePasses() {
+                const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing');
+                const container = document.getElementById('outgoingGatePassList');
+                const filter = document.getElementById('outgoingFilter').value;
+                
+                let filteredPasses = outgoingPasses;
+                if (filter === 'incomplete') {
+                    filteredPasses = outgoingPasses.filter(gp => !isOutgoingDetailsComplete(gp));
+                } else if (filter === 'complete') {
+                    filteredPasses = outgoingPasses.filter(gp => isOutgoingDetailsComplete(gp));
+                }
+                
+                container.innerHTML = '';
+                
+                if (filteredPasses.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-4">No outgoing gate passes found.</p>';
+                    return;
+                }
+                
+                filteredPasses.forEach(gatePass => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'bg-gray-50 p-4 rounded-lg border';
+                    
+                    const hasDetails = isOutgoingDetailsComplete(gatePass);
+                    const statusBadge = hasDetails ? 
+                        '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Complete</span>' :
+                        '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Incomplete</span>';
+                    
+                    listItem.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <h4 class="font-semibold">${gatePass.item} - ${gatePass.type === 'Outgoing' ? 'Sold To: ' + gatePass.purchasedFrom : gatePass.purchasedFrom}</h4>
+                                    ${statusBadge}
+                                </div>
+                                <p class="text-sm text-gray-600">Truck: ${gatePass.truckNumber} | Date: ${gatePass.date}</p>
+                                <p class="text-sm text-gray-600">Weight: ${gatePass.ownWeight} quintal</p>
+                                ${hasDetails ? `
+                                    <div class="mt-2 text-xs text-gray-500">
+                                        Rate: ₹${gatePass.itemRate}/quintal | Broker: ${gatePass.brokerName} | Due: ${gatePass.paymentDueDays} days (${gatePass.paymentDueDate || 'Calculating...'})
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <button onclick="editOutgoingDetails('${gatePass.id}')" 
+                                    class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                ${hasDetails ? 'Edit Details' : 'Add Details'}
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(listItem);
+                });
+            }
+
+            // Make isOutgoingDetailsComplete globally accessible
+            window.isOutgoingDetailsComplete = function(gatePass) {
+                return gatePass && gatePass.itemRate && 
+                       gatePass.brokerName && 
+                       gatePass.outgoingPartyWeight && 
+                       gatePass.paymentDueDays;
+            }
+
+            // Make editOutgoingDetails globally accessible
+            window.editOutgoingDetails = function(gatePassId) {
+                // Access allGatePasses from the global scope
+                const gatePass = window.allGatePasses ? window.allGatePasses.find(gp => gp.id === gatePassId) : null;
+                if (!gatePass) {
+                    console.error('Gate pass not found:', gatePassId);
+                    return;
+                }
+                
+                // Populate the modal
+                document.getElementById('outgoingGatePassId').value = gatePass.id;
+                document.getElementById('outgoingItem').value = gatePass.item;
+                document.getElementById('outgoingSoldTo').value = gatePass.purchasedFrom; // This is the buyer for outgoing
+                document.getElementById('outgoingTruckNumber').value = gatePass.truckNumber;
+                document.getElementById('outgoingOwnWeight').value = gatePass.ownWeight + ' quintal';
+                document.getElementById('outgoingDate').value = gatePass.date;
+                document.getElementById('outgoingItemRate').value = gatePass.itemRate || '';
+                document.getElementById('outgoingBrokerName').value = gatePass.brokerName || '';
+                document.getElementById('outgoingPartyWeight').value = gatePass.outgoingPartyWeight || '';
+                document.getElementById('outgoingPaymentDueDays').value = gatePass.paymentDueDays || '';
+                
+                // If we have paymentDueDays but no calculated date, calculate it
+                if (gatePass.paymentDueDays && !gatePass.paymentDueDate) {
+                    const gatePassDate = new Date(gatePass.date);
+                    const dueDate = new Date(gatePassDate);
+                    dueDate.setDate(dueDate.getDate() + gatePass.paymentDueDays);
+                    gatePass.paymentDueDate = dueDate.toISOString().split('T')[0];
+                }
+                
+                // Show modal
+                document.getElementById('outgoingDetailsModal').style.display = 'flex';
+            }
+
+            // Function to update gate pass in Firebase
+            async function updateGatePassInFirebase(gatePass) {
+                try {
+                    if (gatePass.firebaseId && db) {
+                        const gatePassRef = doc(db, 'gate_passes', gatePass.firebaseId);
+                        await updateDoc(gatePassRef, {
+                            itemRate: gatePass.itemRate,
+                            brokerName: gatePass.brokerName,
+                            outgoingPartyWeight: gatePass.outgoingPartyWeight,
+                            paymentDueDays: gatePass.paymentDueDays,
+                            paymentDueDate: gatePass.paymentDueDate,
+                            lastUpdatedBy: gatePass.lastUpdatedBy,
+                            lastUpdatedAt: gatePass.lastUpdatedAt
+                        });
+                        console.log('✅ Gate pass updated in Firebase');
+                    }
+                } catch (error) {
+                    console.error('❌ Error updating gate pass in Firebase:', error);
+                }
+            }
+
+            // Make saveOutgoingDetails globally accessible
+            window.saveOutgoingDetails = function() {
+                console.log('saveOutgoingDetails called');
+                const gatePassId = document.getElementById('outgoingGatePassId').value;
+                const itemRate = parseFloat(document.getElementById('outgoingItemRate').value);
+                const brokerName = document.getElementById('outgoingBrokerName').value.trim();
+                const outgoingPartyWeight = parseFloat(document.getElementById('outgoingPartyWeight').value);
+                const paymentDueDays = parseInt(document.getElementById('outgoingPaymentDueDays').value);
+                
+                console.log('Form data:', { gatePassId, itemRate, brokerName, outgoingPartyWeight, paymentDueDays });
+                
+                // Validation
+                if (!itemRate || itemRate <= 0) {
+                    showNotification('Please enter a valid item rate', 'error');
+                    return;
+                }
+                if (!brokerName) {
+                    showNotification('Please enter broker name', 'error');
+                    return;
+                }
+                if (!outgoingPartyWeight || outgoingPartyWeight <= 0) {
+                    showNotification('Please enter valid party weight', 'error');
+                    return;
+                }
+                if (!paymentDueDays || paymentDueDays < 1 || paymentDueDays > 365) {
+                    showNotification('Please enter valid payment due days (1-365)', 'error');
+                    return;
+                }
+                
+                // Find and update the gate pass
+                const gatePassIndex = allGatePasses.findIndex(gp => gp.id === gatePassId);
+                if (gatePassIndex !== -1) {
+                    allGatePasses[gatePassIndex].itemRate = itemRate;
+                    allGatePasses[gatePassIndex].brokerName = brokerName;
+                    allGatePasses[gatePassIndex].outgoingPartyWeight = outgoingPartyWeight;
+                    allGatePasses[gatePassIndex].paymentDueDays = paymentDueDays;
+                    
+                    // Calculate and store the actual due date
+                    const gatePassDate = new Date(allGatePasses[gatePassIndex].date);
+                    const dueDate = new Date(gatePassDate);
+                    dueDate.setDate(dueDate.getDate() + paymentDueDays);
+                    allGatePasses[gatePassIndex].paymentDueDate = dueDate.toISOString().split('T')[0];
+                    allGatePasses[gatePassIndex].lastUpdatedBy = currentUser.name;
+                    allGatePasses[gatePassIndex].lastUpdatedAt = new Date().toISOString();
+                    
+                    // Update in Firebase
+                    updateGatePassInFirebase(allGatePasses[gatePassIndex]);
+                    
+                    // Refresh displays
+                    loadOutgoingGatePasses();
+                    renderGatePassList();
+                    renderGatePassTable();
+                    
+                    // Close modal
+                    document.getElementById('outgoingDetailsModal').style.display = 'none';
+                    
+                    showNotification('Outgoing details saved successfully', 'success');
+                }
+            };
+
+            // Event listeners for outgoing details
+            document.getElementById('outgoingFilter').addEventListener('change', loadOutgoingGatePasses);
+            document.getElementById('outgoingDetailsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                window.saveOutgoingDetails();
+            });
+            document.getElementById('cancelOutgoingDetails').addEventListener('click', function() {
+                document.getElementById('outgoingDetailsModal').style.display = 'none';
+            });
+
+            // Payment Management Functions
+            function loadDuePayments() {
+                const outgoingPasses = allGatePasses.filter(gp => 
+                    gp.type === 'Outgoing' && 
+                    gp.itemRate && 
+                    gp.outgoingPartyWeight && 
+                    gp.paymentDueDate
+                );
+                
+                // Calculate payment amounts and status
+                const paymentsWithAmounts = outgoingPasses.map(gatePass => {
+                    const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
+                    const dueDate = new Date(gatePass.paymentDueDate);
+                    const today = new Date();
+                    const daysOverdue = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
+                    
+                    // Handle payment history and calculations
+                    const paymentHistory = gatePass.paymentHistory || [];
+                    const totalReceived = paymentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+                    const remainingAmount = totalAmount - totalReceived;
+                    
+                    // Determine current status
+                    let paymentStatus = 'pending';
+                    if (totalReceived >= totalAmount) {
+                        paymentStatus = 'received';
+                    } else if (totalReceived > 0) {
+                        paymentStatus = 'partial';
+                    }
+                    
+                    return {
+                        ...gatePass,
+                        totalAmount,
+                        amountReceived: totalReceived,
+                        remainingAmount,
+                        daysOverdue,
+                        paymentStatus,
+                        paymentHistory,
+                        paymentReceivedDate: gatePass.paymentReceivedDate || null,
+                        paymentNotes: gatePass.paymentNotes || ''
+                    };
+                });
+                
+                // Apply filters
+                const statusFilter = document.getElementById('paymentStatusFilter').value;
+                const brokerFilter = document.getElementById('brokerFilter').value;
+                const dateFilter = document.getElementById('dueDateFilter').value;
+                
+                let filteredPayments = paymentsWithAmounts;
+                
+                if (statusFilter === 'pending') {
+                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'pending' && p.daysOverdue === 0);
+                } else if (statusFilter === 'partial') {
+                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'partial');
+                } else if (statusFilter === 'overdue') {
+                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus !== 'received' && p.daysOverdue > 0);
+                } else if (statusFilter === 'received') {
+                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'received');
+                }
+                
+                if (brokerFilter !== 'all') {
+                    filteredPayments = filteredPayments.filter(p => p.brokerName === brokerFilter);
+                }
+                
+                if (dateFilter) {
+                    filteredPayments = filteredPayments.filter(p => p.paymentDueDate === dateFilter);
+                }
+                
+                // Update summary cards
+                updatePaymentSummaryCards(paymentsWithAmounts);
+                
+                // Update broker filter options
+                updateBrokerFilter(paymentsWithAmounts);
+                
+                // Render table
+                renderDuePaymentsTable(filteredPayments);
+            }
+
+            function updatePaymentSummaryCards(payments) {
+                const overdue = payments.filter(p => p.paymentStatus !== 'received' && p.daysOverdue > 0);
+                const pending = payments.filter(p => p.paymentStatus === 'pending' && p.daysOverdue === 0);
+                const partial = payments.filter(p => p.paymentStatus === 'partial');
+                const received = payments.filter(p => p.paymentStatus === 'received');
+                
+                const overdueAmount = overdue.reduce((sum, p) => sum + p.remainingAmount, 0);
+                const pendingAmount = pending.reduce((sum, p) => sum + p.remainingAmount, 0);
+                const partialAmount = partial.reduce((sum, p) => sum + p.remainingAmount, 0);
+                const receivedAmount = received.reduce((sum, p) => sum + p.totalAmount, 0);
+                const totalAmount = payments.reduce((sum, p) => sum + p.totalAmount, 0);
+                
+                document.getElementById('overdueAmount').textContent = `₹${overdueAmount.toLocaleString()}`;
+                document.getElementById('overdueCount').textContent = `${overdue.length} payments`;
+                document.getElementById('pendingAmount').textContent = `₹${pendingAmount.toLocaleString()}`;
+                document.getElementById('pendingCount').textContent = `${pending.length} payments`;
+                document.getElementById('partialAmount').textContent = `₹${partialAmount.toLocaleString()}`;
+                document.getElementById('partialCount').textContent = `${partial.length} payments`;
+                document.getElementById('receivedAmount').textContent = `₹${receivedAmount.toLocaleString()}`;
+                document.getElementById('receivedCount').textContent = `${received.length} payments`;
+                document.getElementById('totalAmount').textContent = `₹${totalAmount.toLocaleString()}`;
+                document.getElementById('totalCount').textContent = `${payments.length} payments`;
+            }
+
+            function updateBrokerFilter(payments) {
+                const brokers = [...new Set(payments.map(p => p.brokerName).filter(Boolean))];
+                const brokerSelect = document.getElementById('brokerFilter');
+                
+                // Clear existing options except "All Brokers"
+                brokerSelect.innerHTML = '<option value="all">All Brokers</option>';
+                
+                brokers.forEach(broker => {
+                    const option = document.createElement('option');
+                    option.value = broker;
+                    option.textContent = broker;
+                    brokerSelect.appendChild(option);
+                });
+            }
+
+            function renderDuePaymentsTable(payments) {
+                const tbody = document.getElementById('duePaymentsTableBody');
+                tbody.innerHTML = '';
+                
+                if (payments.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                                No payments found matching the current filters.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                payments.forEach(payment => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50';
+                    
+                    const statusBadge = getPaymentStatusBadge(payment);
+                    const daysOverdueText = payment.daysOverdue > 0 ? `${payment.daysOverdue} days overdue` : 'On time';
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${payment.id}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${payment.item}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${payment.purchasedFrom}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${payment.brokerName}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div class="font-semibold">₹${payment.totalAmount.toLocaleString()}</div>
+                            ${payment.paymentStatus === 'partial' ? `
+                                <div class="text-xs text-gray-500">
+                                    Received: ₹${payment.amountReceived.toLocaleString()}<br>
+                                    Remaining: ₹${payment.remainingAmount.toLocaleString()}
+                                </div>
+                            ` : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${payment.paymentDueDate}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${statusBadge}
+                            ${payment.daysOverdue > 0 ? `<div class="text-xs text-red-600">${daysOverdueText}</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="openPaymentStatusModal('${payment.id}')" 
+                                    class="text-blue-600 hover:text-blue-900 mr-3">
+                                Update Status
+                            </button>
+                            <button onclick="viewPaymentDetails('${payment.id}')" 
+                                    class="text-gray-600 hover:text-gray-900">
+                                View Details
+                            </button>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+            }
+
+            function getPaymentStatusBadge(payment) {
+                if (payment.paymentStatus === 'received') {
+                    return '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Fully Received</span>';
+                } else if (payment.paymentStatus === 'partial') {
+                    return '<span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Partial Payment</span>';
+                } else if (payment.daysOverdue > 0) {
+                    return '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Overdue</span>';
+                } else {
+                    return '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Pending</span>';
+                }
+            }
+
+            // Make functions globally accessible
+            window.openPaymentStatusModal = function(gatePassId) {
+                const gatePass = allGatePasses.find(gp => gp.id === gatePassId);
+                if (!gatePass) return;
+                
+                const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
+                const paymentHistory = gatePass.paymentHistory || [];
+                const totalReceived = paymentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+                const remainingAmount = totalAmount - totalReceived;
+                
+                // Determine current status
+                let paymentStatus = 'pending';
+                if (totalReceived >= totalAmount) {
+                    paymentStatus = 'received';
+                } else if (totalReceived > 0) {
+                    paymentStatus = 'partial';
+                }
+                
+                document.getElementById('paymentGatePassId').value = gatePassId;
+                document.getElementById('paymentGatePassIdDisplay').value = gatePassId;
+                document.getElementById('paymentAmountDisplay').value = `₹${totalAmount.toLocaleString()}`;
+                document.getElementById('paymentBrokerDisplay').value = gatePass.brokerName;
+                document.getElementById('paymentDueDateDisplay').value = gatePass.paymentDueDate;
+                document.getElementById('paymentReceivedDate').value = '';
+                document.getElementById('amountReceived').value = '';
+                document.getElementById('remainingAmount').value = `₹${remainingAmount.toLocaleString()}`;
+                document.getElementById('paymentStatusDisplay').value = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+                document.getElementById('paymentNotes').value = '';
+                
+                // Populate payment history
+                populatePaymentHistory(paymentHistory, totalAmount);
+                
+                document.getElementById('paymentStatusModal').style.display = 'flex';
+            };
+
+            window.viewPaymentDetails = function(gatePassId) {
+                editOutgoingDetails(gatePassId);
+            };
+
+            function populatePaymentHistory(paymentHistory, totalAmount) {
+                const historyContainer = document.getElementById('paymentHistoryList');
+                
+                if (paymentHistory.length === 0) {
+                    historyContainer.innerHTML = '<p class="text-gray-500 text-center py-2">No payments received yet</p>';
+                    return;
+                }
+                
+                // Sort payments by date (newest first)
+                const sortedPayments = [...paymentHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                historyContainer.innerHTML = sortedPayments.map((payment, index) => {
+                    const paymentNumber = sortedPayments.length - index;
+                    const runningTotal = sortedPayments.slice(0, index + 1).reduce((sum, p) => sum + p.amount, 0);
+                    const remainingAfter = totalAmount - runningTotal;
+                    
+                    return `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium text-gray-700">Payment #${paymentNumber}</span>
+                                    <span class="text-xs text-gray-500">${payment.date}</span>
+                                </div>
+                                <div class="text-sm text-gray-600">Amount: ₹${payment.amount.toLocaleString()}</div>
+                                ${payment.notes ? `<div class="text-xs text-gray-500">${payment.notes}</div>` : ''}
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-gray-700">Total: ₹${runningTotal.toLocaleString()}</div>
+                                <div class="text-xs text-gray-500">Remaining: ₹${remainingAfter.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            window.savePaymentStatus = function() {
+                const gatePassId = document.getElementById('paymentGatePassId').value;
+                const paymentReceivedDate = document.getElementById('paymentReceivedDate').value;
+                const amountReceived = parseFloat(document.getElementById('amountReceived').value) || 0;
+                const paymentNotes = document.getElementById('paymentNotes').value.trim();
+                
+                // Find the gate pass to get total amount
+                const gatePass = allGatePasses.find(gp => gp.id === gatePassId);
+                if (!gatePass) return;
+                
+                const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
+                
+                // Validation
+                if (!paymentReceivedDate) {
+                    showNotification('Please select payment received date', 'error');
+                    return;
+                }
+                
+                if (amountReceived <= 0) {
+                    showNotification('Please enter amount received', 'error');
+                    return;
+                }
+                
+                // Get current payment history
+                const currentHistory = gatePass.paymentHistory || [];
+                const totalReceived = currentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+                const newTotal = totalReceived + amountReceived;
+                
+                if (newTotal > totalAmount) {
+                    showNotification(`Total payments cannot exceed total amount. Maximum allowed: ₹${(totalAmount - totalReceived).toLocaleString()}`, 'error');
+                    return;
+                }
+                
+                // Find and update the gate pass
+                const gatePassIndex = allGatePasses.findIndex(gp => gp.id === gatePassId);
+                if (gatePassIndex !== -1) {
+                    // Add new payment to history
+                    const newPayment = {
+                        id: Date.now().toString(), // Simple ID generation
+                        amount: amountReceived,
+                        date: paymentReceivedDate,
+                        notes: paymentNotes,
+                        addedBy: currentUser.name,
+                        addedAt: new Date().toISOString()
+                    };
+                    
+                    // Update payment history
+                    allGatePasses[gatePassIndex].paymentHistory = [...currentHistory, newPayment];
+                    
+                    // Update calculated fields
+                    allGatePasses[gatePassIndex].amountReceived = newTotal;
+                    allGatePasses[gatePassIndex].lastUpdatedBy = currentUser.name;
+                    allGatePasses[gatePassIndex].lastUpdatedAt = new Date().toISOString();
+                    
+                    // Update in Firebase
+                    updatePaymentStatusInFirebase(allGatePasses[gatePassIndex]);
+                    
+                    // Refresh displays
+                    loadDuePayments();
+                    
+                    // Close modal
+                    document.getElementById('paymentStatusModal').style.display = 'none';
+                    
+                    showNotification(`Payment of ₹${amountReceived.toLocaleString()} added successfully`, 'success');
+                }
+            };
+
+            // Function to update payment status in Firebase
+            async function updatePaymentStatusInFirebase(gatePass) {
+                try {
+                    if (gatePass.firebaseId && db) {
+                        const gatePassRef = doc(db, 'gate_passes', gatePass.firebaseId);
+                        await updateDoc(gatePassRef, {
+                            paymentStatus: gatePass.paymentStatus,
+                            amountReceived: gatePass.amountReceived,
+                            paymentHistory: gatePass.paymentHistory,
+                            lastUpdatedBy: gatePass.lastUpdatedBy,
+                            lastUpdatedAt: gatePass.lastUpdatedAt
+                        });
+                        console.log('✅ Payment status updated in Firebase');
+                    }
+                } catch (error) {
+                    console.error('❌ Error updating payment status in Firebase:', error);
+                }
+            }
+
+            // Event listeners for payment management
+            document.getElementById('paymentStatusFilter').addEventListener('change', loadDuePayments);
+            document.getElementById('brokerFilter').addEventListener('change', loadDuePayments);
+            document.getElementById('dueDateFilter').addEventListener('change', loadDuePayments);
+            document.getElementById('paymentStatusForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                window.savePaymentStatus();
+            });
+            document.getElementById('cancelPaymentStatus').addEventListener('click', function() {
+                document.getElementById('paymentStatusModal').style.display = 'none';
+            });
+
+            // Real-time calculation for remaining amount
+            document.getElementById('amountReceived').addEventListener('input', function() {
+                const gatePassId = document.getElementById('paymentGatePassId').value;
+                const gatePass = allGatePasses.find(gp => gp.id === gatePassId);
+                if (gatePass) {
+                    const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
+                    const currentHistory = gatePass.paymentHistory || [];
+                    const totalReceived = currentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+                    const newAmount = parseFloat(this.value) || 0;
+                    const remainingAmount = totalAmount - (totalReceived + newAmount);
+                    document.getElementById('remainingAmount').value = `₹${remainingAmount.toLocaleString()}`;
+                }
             });
         };
     </script>
