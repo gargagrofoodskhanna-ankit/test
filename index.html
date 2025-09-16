@@ -415,19 +415,49 @@
                             <!-- Add New Party Form -->
                             <div class="bg-white p-4 rounded-lg">
                                 <h4 class="font-medium mb-3">Add New Party</h4>
-                                <div class="flex gap-2">
-                                    <input type="text" id="newPartyName" placeholder="Enter party name" 
-                                           class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <button id="addPartyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                        Add Party
-                                    </button>
-                                </div>
+                                <form id="addPartyForm" class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="newPartyName" class="block text-sm font-medium text-gray-700 mb-1">Party Name *</label>
+                                            <input type="text" id="newPartyName" placeholder="Enter party name" required
+                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="newPartyCity" class="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                                            <input type="text" id="newPartyCity" placeholder="Enter city" required
+                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="newPartyState" class="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                                            <input type="text" id="newPartyState" placeholder="Enter state" required
+                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                        <div>
+                                            <label for="newPartyGstPan" class="block text-sm font-medium text-gray-700 mb-1">GST/PAN Number *</label>
+                                            <input type="text" id="newPartyGstPan" placeholder="Enter GST or PAN number" required
+                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="newPartyAddress" class="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                                        <textarea id="newPartyAddress" placeholder="Enter complete address" required rows="3"
+                                                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                    </div>
+                                    <div class="flex justify-end gap-3">
+                                        <button type="button" id="clearPartyForm" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                            Clear
+                                        </button>
+                                        <button type="submit" id="addPartyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                            Add Party
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                             
                             <!-- Party List -->
                             <div class="bg-white p-4 rounded-lg">
                                 <h4 class="font-medium mb-3">Existing Parties</h4>
-                                <div id="partyList" class="space-y-2 max-h-40 overflow-y-auto">
+                                <div id="partyList" class="space-y-3 max-h-60 overflow-y-auto">
                                     <!-- Parties will be loaded here -->
                                 </div>
                             </div>
@@ -1109,7 +1139,13 @@
         const supplierSelect = document.getElementById('supplierSelect');
         const editSupplierSelect = document.getElementById('editSupplierSelect');
         const newPartyName = document.getElementById('newPartyName');
+        const newPartyCity = document.getElementById('newPartyCity');
+        const newPartyState = document.getElementById('newPartyState');
+        const newPartyAddress = document.getElementById('newPartyAddress');
+        const newPartyGstPan = document.getElementById('newPartyGstPan');
         const addPartyBtn = document.getElementById('addPartyBtn');
+        const addPartyForm = document.getElementById('addPartyForm');
+        const clearPartyForm = document.getElementById('clearPartyForm');
         const partyList = document.getElementById('partyList');
         const gatepassTypeSelect = document.getElementById('gatepassTypeSelect');
         const gatePassTableBody = document.getElementById('gatePassTableBody');
@@ -1123,7 +1159,8 @@
         const saveBtnSpinner = document.getElementById('saveBtnSpinner');
         const syncStatusText = document.getElementById('syncStatusText');
         const manualSyncBtn = document.getElementById('manualSyncBtn');
-        let allSuppliers = [];
+        let allSuppliers = []; // For backward compatibility - stores just names
+        let allParties = []; // Stores complete party data
         let useLocalStorage = false; // Fallback flag
 
         const editModal = document.getElementById('editModal');
@@ -1372,6 +1409,7 @@
             // Clear application data arrays
             allGatePasses.length = 0;
             allSuppliers.length = 0;
+            allParties.length = 0;
             
             // Clear UI displays
             gatePassList.innerHTML = '';
@@ -1537,11 +1575,14 @@
                 const suppliersRef = collection(db, 'suppliers');
                 onSnapshot(suppliersRef, (snapshot) => {
                     allSuppliers.length = 0; // Clear existing data
+                    allParties.length = 0; // Clear existing party data
                     snapshot.forEach(doc => {
-                        const data = doc.data();
-                        allSuppliers.push(data.name);
+                        const data = { id: doc.id, ...doc.data() };
+                        allSuppliers.push(data.name); // For backward compatibility
+                        allParties.push(data); // Store complete party data
                     });
                     console.log("✅ Suppliers loaded from cloud:", allSuppliers.length);
+                    console.log("✅ Complete party data loaded:", allParties.length);
                     
                     // Update dropdowns when suppliers change
                     populateSupplierDropdowns();
@@ -1773,16 +1814,21 @@
             supplierSelect.innerHTML = '<option value="">Select a party...</option>';
             editSupplierSelect.innerHTML = '<option value="">Select a party...</option>';
             
-            // Add all suppliers as options
-            allSuppliers.forEach(supplier => {
+            // Sort parties by name for consistent ordering
+            const sortedParties = [...allParties].sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Add all parties as options with enhanced display
+            sortedParties.forEach(party => {
+                const displayText = `${party.name} - ${party.city}, ${party.state} (GST: ${party.gstPan})`;
+                
                 const option1 = document.createElement('option');
-                option1.value = supplier;
-                option1.textContent = supplier;
+                option1.value = party.name;
+                option1.textContent = displayText;
                 supplierSelect.appendChild(option1);
                 
                 const option2 = document.createElement('option');
-                option2.value = supplier;
-                option2.textContent = supplier;
+                option2.value = party.name;
+                option2.textContent = displayText;
                 editSupplierSelect.appendChild(option2);
             });
         }
@@ -1790,9 +1836,46 @@
         // Add new party (Admin only)
         async function addNewParty() {
             const partyName = newPartyName.value.trim();
+            const partyCity = newPartyCity.value.trim();
+            const partyState = newPartyState.value.trim();
+            const partyAddress = newPartyAddress.value.trim();
+            const partyGstPan = newPartyGstPan.value.trim();
             
+            // Validation
             if (!partyName) {
-                showNotification("Please enter a party name", 'error');
+                showNotification("Please enter party name", 'error');
+                newPartyName.focus();
+                return;
+            }
+            
+            if (!partyCity) {
+                showNotification("Please enter city", 'error');
+                newPartyCity.focus();
+                return;
+            }
+            
+            if (!partyState) {
+                showNotification("Please enter state", 'error');
+                newPartyState.focus();
+                return;
+            }
+            
+            if (!partyAddress) {
+                showNotification("Please enter address", 'error');
+                newPartyAddress.focus();
+                return;
+            }
+            
+            if (!partyGstPan) {
+                showNotification("Please enter GST/PAN number", 'error');
+                newPartyGstPan.focus();
+                return;
+            }
+            
+            // Validate GST/PAN format
+            if (!isValidGstPan(partyGstPan)) {
+                showNotification("Please enter a valid GST or PAN number", 'error');
+                newPartyGstPan.focus();
                 return;
             }
             
@@ -1801,27 +1884,46 @@
                 return;
             }
             
-            // Check if party already exists
-            if (allSuppliers.includes(partyName)) {
-                showNotification("Party already exists", 'error');
-                return;
-            }
-            
             try {
                 console.log("🔄 Adding new party to cloud storage...");
                 
+                // Check if party already exists (by name or GST/PAN)
+                const suppliersRef = collection(db, 'suppliers');
+                const q1 = query(suppliersRef, where('name', '==', partyName));
+                const q2 = query(suppliersRef, where('gstPan', '==', partyGstPan));
+                
+                const [nameSnapshot, gstSnapshot] = await Promise.all([
+                    getDocs(q1),
+                    getDocs(q2)
+                ]);
+                
+                if (!nameSnapshot.empty) {
+                    showNotification("Party with this name already exists", 'error');
+                    return;
+                }
+                
+                if (!gstSnapshot.empty) {
+                    showNotification("Party with this GST/PAN number already exists", 'error');
+                    return;
+                }
+                
+                // Add new party to database
                 const partyData = {
                     name: partyName,
+                    city: partyCity,
+                    state: partyState,
+                    address: partyAddress,
+                    gstPan: partyGstPan,
                     createdAt: new Date().toISOString(),
                     createdBy: userId || 'anonymous',
                     createdByRole: userRole || 'admin'
                 };
                 
-                await addDoc(collection(db, 'suppliers'), partyData);
+                await addDoc(suppliersRef, partyData);
                 console.log("✅ New party added to cloud:", partyName);
                 
-                // Add to local array
-                allSuppliers.push(partyName);
+                // Note: allSuppliers will be updated automatically by the onSnapshot listener
+                // No need to manually push here to avoid duplicates
                 
                 // Update dropdowns
                 populateSupplierDropdowns();
@@ -1829,8 +1931,8 @@
                 // Update party list in admin view
                 renderPartyList();
                 
-                // Clear input
-                newPartyName.value = '';
+                // Clear form
+                clearPartyFormFields();
                 
                 showNotification("✅ Party added successfully!", 'success');
                 
@@ -1839,22 +1941,46 @@
             }
         }
 
+        // GST/PAN validation function
+        function isValidGstPan(value) {
+            const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+            
+            return gstRegex.test(value) || panRegex.test(value);
+        }
+
+        // Clear party form fields
+        function clearPartyFormFields() {
+            newPartyName.value = '';
+            newPartyCity.value = '';
+            newPartyState.value = '';
+            newPartyAddress.value = '';
+            newPartyGstPan.value = '';
+        }
+
         // Render party list in admin view
         function renderPartyList() {
             partyList.innerHTML = '';
             
-            if (allSuppliers.length === 0) {
+            if (allParties.length === 0) {
                 partyList.innerHTML = '<p class="text-gray-500 text-center">No parties found</p>';
                 return;
             }
             
-            allSuppliers.forEach(party => {
+            // Sort parties by name
+            const sortedParties = [...allParties].sort((a, b) => a.name.localeCompare(b.name));
+            
+            sortedParties.forEach(party => {
                 const partyItem = document.createElement('div');
-                partyItem.className = 'flex justify-between items-center p-2 bg-gray-50 rounded';
+                partyItem.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg border mb-2';
                 partyItem.innerHTML = `
-                    <span class="font-medium">${party}</span>
-                    <button onclick="deleteParty('${party}')" 
-                            class="text-red-600 hover:text-red-800 text-sm font-medium">
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">${party.name}</div>
+                        <div class="text-sm text-gray-600">${party.city}, ${party.state}</div>
+                        <div class="text-xs text-gray-500">GST: ${party.gstPan}</div>
+                    </div>
+                    <button onclick="deleteParty('${party.name}')" 
+                            class="text-red-600 hover:text-red-800 text-sm font-medium px-3 py-1 rounded hover:bg-red-50 border border-red-200">
                         Delete
                     </button>
                 `;
@@ -1863,8 +1989,71 @@
         }
 
         // Delete party (Admin only)
-        async function deleteParty(partyName) {
+        window.deleteParty = async function(partyName) {
+            // Check if user is admin
+            if (userRole !== 'admin') {
+                showNotification("❌ Only admin can delete parties", 'error');
+                return;
+            }
+            
             if (!confirm(`Are you sure you want to delete the party "${partyName}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            // Check if party is being used in any gate passes (both local and database)
+            const isPartyInUseLocally = allGatePasses.some(gatePass => 
+                gatePass.purchasedFrom === partyName || 
+                gatePass.supplier === partyName
+            );
+            
+            if (isPartyInUseLocally) {
+                showNotification("❌ Cannot delete party that is being used in gate passes", 'error');
+                return;
+            }
+            
+            // Additional check: Query database directly to ensure no gate passes are using this party
+            try {
+                console.log("🔍 Checking database for gate passes using this party...");
+                showNotification("🔍 Checking database for party usage...", 'info');
+                
+                const gatePassesRef = collection(db, 'gate_passes');
+                const q = query(gatePassesRef, 
+                    where('purchasedFrom', '==', partyName)
+                );
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    showNotification(`❌ Cannot delete party. Found ${querySnapshot.size} gate pass(es) using this party in database`, 'error');
+                    return;
+                }
+                
+                // Also check for 'supplier' field (for backward compatibility)
+                const q2 = query(gatePassesRef, 
+                    where('supplier', '==', partyName)
+                );
+                const querySnapshot2 = await getDocs(q2);
+                
+                if (!querySnapshot2.empty) {
+                    showNotification(`❌ Cannot delete party. Found ${querySnapshot2.size} gate pass(es) using this party as supplier in database`, 'error');
+                    return;
+                }
+                
+                // Check for outgoing gate passes using this party as "Sold To"
+                const q3 = query(gatePassesRef, 
+                    where('soldTo', '==', partyName)
+                );
+                const querySnapshot3 = await getDocs(q3);
+                
+                if (!querySnapshot3.empty) {
+                    showNotification(`❌ Cannot delete party. Found ${querySnapshot3.size} outgoing gate pass(es) using this party as "Sold To" in database`, 'error');
+                    return;
+                }
+                
+                console.log("✅ No gate passes found using this party in database");
+                
+            } catch (error) {
+                console.error("❌ Error checking database for party usage:", error);
+                showNotification("❌ Error checking party usage in database. Deletion cancelled for safety.", 'error');
                 return;
             }
             
@@ -1885,12 +2074,17 @@
                     const doc = querySnapshot.docs[0];
                     await deleteDoc(doc.ref);
                     console.log("✅ Party deleted from cloud:", partyName);
+                } else {
+                    console.log("⚠️ Party not found in cloud storage:", partyName);
                 }
                 
                 // Remove from local array
                 const index = allSuppliers.indexOf(partyName);
                 if (index > -1) {
                     allSuppliers.splice(index, 1);
+                    console.log("✅ Party removed from local array:", partyName);
+                } else {
+                    console.log("⚠️ Party not found in local array:", partyName);
                 }
                 
                 // Update dropdowns
@@ -1899,12 +2093,16 @@
                 // Update party list in admin view
                 renderPartyList();
                 
+                // Update admin stats
+                updateAdminStats();
+                
                 showNotification("✅ Party deleted successfully!", 'success');
                 
             } catch (error) {
+                console.error("❌ Error deleting party:", error);
                 handleCloudError(error, "Party deletion");
             }
-        }
+        };
 
         // Fuzzy matching function
         function fuzzyMatch(query, text) {
@@ -2047,7 +2245,7 @@
                     };
                     const supplierRef = await addDoc(collection(db, 'suppliers'), supplierData);
                     console.log("✅ New supplier saved to Firebase:", supplierRef.id);
-                    allSuppliers.push(purchasedFrom);
+                    // Note: allSuppliers will be updated automatically by the onSnapshot listener
                 }
                 
                 // Update UI with cloud data
@@ -2599,11 +2797,21 @@
         adminViewBtn.addEventListener('click', () => toggleView('admin'));
         
         // Party management event listeners
-        addPartyBtn.addEventListener('click', addNewParty);
-        newPartyName.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addNewParty();
-            }
+        addPartyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            addNewParty();
+        });
+        
+        clearPartyForm.addEventListener('click', clearPartyFormFields);
+        
+        // Enter key support for form fields
+        [newPartyName, newPartyCity, newPartyState, newPartyAddress, newPartyGstPan].forEach(field => {
+            field.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewParty();
+                }
+            });
         });
         
         
