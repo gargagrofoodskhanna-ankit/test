@@ -115,20 +115,9 @@
                     </button>
                 </div>
                 <p class="text-sm opacity-80">Record and track grain purchases in real-time.</p>
-                <div id="userInfo" class="mt-2 text-sm opacity-90"></div>
             </div>
         <div class="p-6 md:p-8">
-            <!-- System Status Indicator -->
-            <div id="statusMessage" class="text-center p-2 rounded-lg mb-4 text-sm font-semibold text-gray-700 bg-gray-200">
-                Connecting to system...
-            </div>
             
-            <!-- Network Status Indicator -->
-            <div id="networkStatus" class="text-center mb-2">
-                <span id="networkStatusText" class="text-xs text-gray-500">
-                    <span id="networkIcon">🌐</span> Checking connection...
-                </span>
-            </div>
 
             <!-- Sync Status and Manual Sync Button -->
             <div id="syncStatus" class="text-center mb-4">
@@ -158,11 +147,6 @@
                         </button>
                     </div>
                 </div>
-            </div>
-            <!-- User Info Display -->
-            <div class="bg-gray-100 rounded-lg p-3 text-center mb-6 shadow-inner">
-                <span class="text-xs font-semibold text-gray-600">Your User ID:</span>
-                <p id="userIdDisplay" class="text-sm font-mono text-gray-800 break-all mt-1"></p>
             </div>
 
             <!-- View Toggler -->
@@ -1109,12 +1093,6 @@
                 console.log("❌ Firebase connection failed - Cloud-only mode active");
                 showNotification("❌ Cannot connect to cloud storage. Please check your internet connection and try again.", 'error');
                 
-                // Update status message to show connection error
-                if (statusMessage) {
-                    statusMessage.textContent = "Connection Error - Cloud Storage Required";
-                    statusMessage.classList.remove('bg-green-200', 'text-green-800');
-                    statusMessage.classList.add('bg-red-200', 'text-red-800');
-                }
             }
         }
 
@@ -1214,34 +1192,17 @@
             return navigator.onLine;
         }
         
-        // Network status monitoring
-        function updateNetworkStatus() {
-            const networkStatusText = document.getElementById('networkStatusText');
-            const networkIcon = document.getElementById('networkIcon');
-            
-            if (checkNetworkConnectivity()) {
-                networkStatusText.innerHTML = '<span id="networkIcon">🌐</span> Online - Cloud storage available';
-                networkStatusText.className = 'text-xs text-green-600';
-            } else {
-                networkStatusText.innerHTML = '<span id="networkIcon">📡</span> Offline - Cloud storage unavailable';
-                networkStatusText.className = 'text-xs text-red-600';
-            }
-        }
         
         // Initialize network monitoring
         function initializeNetworkMonitoring() {
-            updateNetworkStatus();
-            
             // Listen for online/offline events
             window.addEventListener('online', () => {
                 console.log("🌐 Network connection restored");
-                updateNetworkStatus();
                 showNotification("🌐 Network connection restored", 'success');
             });
             
             window.addEventListener('offline', () => {
                 console.log("📡 Network connection lost");
-                updateNetworkStatus();
                 showNotification("📡 Network connection lost - Cloud storage unavailable", 'error');
             });
         }
@@ -1271,11 +1232,8 @@
         const mainApp = document.getElementById('mainApp');
         const loginForm = document.getElementById('loginForm');
         const logoutBtn = document.getElementById('logoutBtn');
-        const userInfo = document.getElementById('userInfo');
         const adminViewBtn = document.getElementById('adminViewBtn');
         const adminView = document.getElementById('adminView');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const statusMessage = document.getElementById('statusMessage');
         const recordViewBtn = document.getElementById('recordViewBtn');
         const reportsViewBtn = document.getElementById('reportsViewBtn');
         const mainView = document.getElementById('mainView');
@@ -1584,13 +1542,7 @@
             adminViewBtn.classList.remove('bg-blue-600', 'text-white');
             adminViewBtn.classList.add('bg-gray-200', 'text-gray-800');
             
-            // Reset status message
-            statusMessage.textContent = "Please log in to continue";
-            statusMessage.classList.remove('bg-green-200', 'text-green-800', 'bg-orange-200', 'text-orange-800', 'bg-red-200', 'text-red-800');
-            statusMessage.classList.add('bg-gray-200', 'text-gray-700');
             
-            // Clear user ID display
-            userIdDisplay.textContent = '';
             
             // Show logout confirmation
             showNotification("✅ Logged out successfully", 'success');
@@ -1600,13 +1552,6 @@
         function updateUIForUserRole() {
             if (!currentUser) return;
 
-            // Update user info display
-            userInfo.innerHTML = `
-                <div class="flex items-center justify-center gap-2">
-                    <span class="font-semibold">${currentUser.name}</span>
-                    <span class="px-2 py-1 bg-white bg-opacity-30 rounded text-xs">${userRole.toUpperCase()}</span>
-                </div>
-            `;
 
             // Show/hide admin button based on role
             if (userRole === 'admin') {
@@ -1651,13 +1596,8 @@
         async function setupAuthAndListener() {
             if (!auth || !db) {
                 console.error("Firebase services are not initialized.");
-                statusMessage.textContent = "Error: System not initialized";
-                statusMessage.classList.remove('bg-gray-200');
-                statusMessage.classList.add('bg-red-200', 'text-red-800');
                 return;
             }
-
-            statusMessage.textContent = "Connecting to system...";
             console.log("🔧 Setting up authentication and listeners...");
 
             try {
@@ -1672,17 +1612,12 @@
                 if (currentUser) {
                     userId = currentUser.username + '_' + currentUser.role;
                     console.log("📝 User authenticated with role:", currentUser.role);
-                    statusMessage.textContent = `System Ready - ${currentUser.name} (${userRole.toUpperCase()})`;
                 } else {
                     userId = auth.currentUser?.uid || crypto.randomUUID();
                     console.log("📝 Anonymous user authenticated");
-                    statusMessage.textContent = "System Ready (Anonymous Session)";
                 }
 
                 userAuthReady = true;
-                userIdDisplay.textContent = userId;
-                statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
-                statusMessage.classList.add('bg-green-200', 'text-green-800');
 
                 // Start data listeners
                 startRealtimeListeners();
@@ -1696,10 +1631,6 @@
                 // Cloud-only mode: Authentication failed
                 userId = currentUser ? currentUser.username + '_' + currentUser.role : 'cloud_user';
                 userAuthReady = false; // Mark as not ready for Firebase operations
-                userIdDisplay.textContent = userId;
-                statusMessage.textContent = "System Ready (Cloud Storage Required)";
-                statusMessage.classList.remove('bg-gray-200', 'bg-red-200', 'text-red-800');
-                statusMessage.classList.add('bg-orange-200', 'text-orange-800');
                 
                 // Show cloud-only error
                 showCloudOnlyError("Authentication");
