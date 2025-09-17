@@ -326,14 +326,29 @@
 
             <!-- Admin View -->
             <div id="adminView" class="hidden">
-                <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Admin Panel</h2>
-                <div class="space-y-6">
-                    <!-- Due Payments Management -->
+                <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Admin Panel</h2>
+                
+                <!-- Admin Tabs -->
+                <div class="mb-6">
+                    <div class="flex justify-center">
+                        <div class="bg-gray-100 p-1 rounded-lg">
+                            <button id="adminPaymentsTab" class="px-6 py-2 rounded-md font-medium text-sm transition-colors bg-blue-600 text-white">
+                                Payments Management
+                            </button>
+                            <button id="adminPartiesTab" class="px-6 py-2 rounded-md font-medium text-sm transition-colors text-gray-600 hover:text-gray-800">
+                                Party Management
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Tab Content -->
+                <div id="adminPaymentsContent" class="admin-tab-content">
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h3 class="text-lg font-semibold mb-4">Due Payments Management</h3>
                         
                         <!-- Summary Cards -->
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                             <div class="bg-red-50 p-4 rounded-lg border border-red-200">
                                 <h4 class="text-sm font-medium text-red-800">Overdue</h4>
                                 <p id="overdueAmount" class="text-2xl font-bold text-red-900">₹0</p>
@@ -354,11 +369,6 @@
                                 <p id="receivedAmount" class="text-2xl font-bold text-green-900">₹0</p>
                                 <p id="receivedCount" class="text-xs text-green-600">0 payments</p>
                             </div>
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                <h4 class="text-sm font-medium text-blue-800">Total</h4>
-                                <p id="totalAmount" class="text-2xl font-bold text-blue-900">₹0</p>
-                                <p id="totalCount" class="text-xs text-blue-600">0 payments</p>
-                            </div>
                         </div>
                         
                         <!-- Filter Options -->
@@ -377,6 +387,12 @@
                         </div>
                         
                         <!-- Due Payments Table -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-medium">Due Payments</h4>
+                            <button onclick="addSamplePaymentData()" class="px-3 py-1 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors text-sm">
+                                💰 Add Sample Payments
+                            </button>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -397,115 +413,65 @@
                             </table>
                         </div>
                     </div>
-                    
-                    <!-- User Management -->
-                    <div class="bg-gray-100 p-4 rounded-lg">
-                        <h3 class="text-lg font-semibold mb-3">User Management</h3>
-                        <div class="space-y-2">
-                            <div class="flex justify-between items-center p-2 bg-white rounded">
-                                <span>Admin User</span>
-                                <span class="text-green-600 font-semibold">Active</span>
-                            </div>
-                            <div class="flex justify-between items-center p-2 bg-white rounded">
-                                <span>User 1</span>
-                                <span class="text-green-600 font-semibold">Active</span>
-                            </div>
-                            <div class="flex justify-between items-center p-2 bg-white rounded">
-                                <span>User 2</span>
-                                <span class="text-green-600 font-semibold">Active</span>
-                            </div>
-                        </div>
-                    </div>
+                </div>
 
-                    <!-- Party Management -->
-                    <div class="bg-gray-100 p-4 rounded-lg">
-                        <h3 class="text-lg font-semibold mb-3">Party Management</h3>
-                        <div class="space-y-4">
-                            <!-- Add New Party Form -->
-                            <div class="bg-white p-4 rounded-lg">
-                                <h4 class="font-medium mb-3">Add New Party</h4>
-                                <form id="addPartyForm" class="space-y-4">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label for="newPartyName" class="block text-sm font-medium text-gray-700 mb-1">Party Name *</label>
-                                            <input type="text" id="newPartyName" placeholder="Enter party name" required
-                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-                                        <div>
-                                            <label for="newPartyCity" class="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                                            <input type="text" id="newPartyCity" placeholder="Enter city" required
-                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-                                        <div>
-                                            <label for="newPartyState" class="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                                            <input type="text" id="newPartyState" placeholder="Enter state" required
-                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-                                        <div>
-                                            <label for="newPartyGstPan" class="block text-sm font-medium text-gray-700 mb-1">GST/PAN Number *</label>
-                                            <input type="text" id="newPartyGstPan" placeholder="Enter GST or PAN number" required
-                                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
+                <!-- Parties Tab Content -->
+                <div id="adminPartiesContent" class="admin-tab-content hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-semibold mb-4">Party Management</h3>
+                        
+                        <!-- Add New Party Form -->
+                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-medium mb-3">Add New Party</h4>
+                            <form id="addPartyForm" class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="newPartyName" class="block text-sm font-medium text-gray-700 mb-1">Party Name *</label>
+                                        <input type="text" id="newPartyName" placeholder="Enter party name" required
+                                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     </div>
                                     <div>
-                                        <label for="newPartyAddress" class="block text-sm font-medium text-gray-700 mb-1">Address *</label>
-                                        <textarea id="newPartyAddress" placeholder="Enter complete address" required rows="3"
-                                                  class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                        <label for="newPartyCity" class="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                                        <input type="text" id="newPartyCity" placeholder="Enter city" required
+                                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     </div>
-                                    <div class="flex justify-end gap-3">
-                                        <button type="button" id="clearPartyForm" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                                            Clear
-                                        </button>
-                                        <button type="submit" id="addPartyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                            Add Party
-                                        </button>
+                                    <div>
+                                        <label for="newPartyState" class="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                                        <input type="text" id="newPartyState" placeholder="Enter state" required
+                                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     </div>
-                                </form>
-                            </div>
-                            
-                            <!-- Party List -->
-                            <div class="bg-white p-4 rounded-lg">
-                                <h4 class="font-medium mb-3">Existing Parties</h4>
-                                <div id="partyList" class="space-y-3 max-h-60 overflow-y-auto">
-                                    <!-- Parties will be loaded here -->
+                                    <div>
+                                        <label for="newPartyGstPan" class="block text-sm font-medium text-gray-700 mb-1">GST/PAN Number *</label>
+                                        <input type="text" id="newPartyGstPan" placeholder="Enter GST or PAN number" required
+                                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
                                 </div>
+                                <div>
+                                    <label for="newPartyAddress" class="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                                    <textarea id="newPartyAddress" placeholder="Enter complete address" required rows="3"
+                                              class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                </div>
+                                <div class="flex justify-end gap-3">
+                                    <button type="button" id="clearPartyForm" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                        Clear
+                                    </button>
+                                    <button type="submit" id="addPartyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                        Add Party
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Party List -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium mb-3">Existing Parties</h4>
+                            <div id="partyList" class="space-y-3 max-h-60 overflow-y-auto">
+                                <!-- Parties will be loaded here -->
                             </div>
                         </div>
                     </div>
-
-                    <!-- System Statistics -->
-                    <div class="bg-gray-100 p-4 rounded-lg">
-                        <h3 class="text-lg font-semibold mb-3">System Statistics</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white p-3 rounded text-center">
-                                <p class="text-2xl font-bold text-blue-600" id="totalGatePasses">0</p>
-                                <p class="text-sm text-gray-600">Total Gate Passes</p>
-                            </div>
-                            <div class="bg-white p-3 rounded text-center">
-                                <p class="text-2xl font-bold text-green-600" id="totalSuppliers">0</p>
-                                <p class="text-sm text-gray-600">Total Parties</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Role Permissions -->
-                    <div class="bg-gray-100 p-4 rounded-lg">
-                        <h3 class="text-lg font-semibold mb-3">Role Permissions</h3>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span><strong>Admin:</strong></span>
-                                <span class="text-green-600">Full Access</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span><strong>User 1:</strong></span>
-                                <span class="text-blue-600">Add, View, Edit Gate Passes</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span><strong>User 2:</strong></span>
-                                <span class="text-orange-600">View Only</span>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
                 </div>
             </div>
         </div>
@@ -1638,6 +1604,11 @@
                     
                     // Update dropdowns when suppliers change
                     populateSupplierDropdowns();
+                    
+                    // Update party list in admin view if it's currently visible
+                    if (!adminView.classList.contains('hidden')) {
+                        renderPartyList();
+                    }
                 }, (error) => {
                     console.error("❌ Error fetching suppliers from cloud:", error);
                     showNotification("❌ Failed to load suppliers from cloud", 'error');
@@ -2016,9 +1987,14 @@
 
         // Render party list in admin view
         function renderPartyList() {
+            console.log("🔄 Rendering party list, allParties count:", allParties.length);
+            console.log("🔄 allParties data:", allParties);
+            console.log("🔄 allSuppliers count:", allSuppliers.length);
+            console.log("🔄 allSuppliers data:", allSuppliers);
             partyList.innerHTML = '';
             
             if (allParties.length === 0) {
+                console.log("⚠️ No parties found in allParties array");
                 partyList.innerHTML = '<p class="text-gray-500 text-center">No parties found</p>';
                 return;
             }
@@ -2035,7 +2011,7 @@
                         <div class="text-sm text-gray-600">${party.city}, ${party.state}</div>
                         <div class="text-xs text-gray-500">GST: ${party.gstPan}</div>
                     </div>
-                    <button onclick="deleteParty('${party.name}')" 
+                    <button onclick="deleteParty('${party.id || party.name}')" 
                             class="text-red-600 hover:text-red-800 text-sm font-medium px-3 py-1 rounded hover:bg-red-50 border border-red-200">
                         Delete
                     </button>
@@ -2134,14 +2110,18 @@
                     console.log("⚠️ Party not found in cloud storage:", partyName);
                 }
                 
-                // Remove from local array
+                // Remove from local arrays
                 const index = allSuppliers.indexOf(partyName);
                 if (index > -1) {
                     allSuppliers.splice(index, 1);
-                    console.log("✅ Party removed from local array:", partyName);
+                    console.log("✅ Party removed from allSuppliers array:", partyName);
                 } else {
-                    console.log("⚠️ Party not found in local array:", partyName);
+                    console.log("⚠️ Party not found in allSuppliers array:", partyName);
                 }
+                
+                // Also remove from allParties array
+                allParties = allParties.filter(p => p.name !== partyName);
+                console.log("✅ Party removed from allParties array:", partyName);
                 
                 // Update dropdowns
                 populateSupplierDropdowns();
@@ -2642,6 +2622,9 @@
                 updateAdminStats();
                 renderPartyList();
                 loadDuePayments();
+                
+                // Ensure we're on the payments tab by default
+                switchAdminTab('payments');
             } else {
                 mainView.classList.remove('hidden');
                 recordViewBtn.classList.add('bg-blue-600', 'text-white');
@@ -2650,9 +2633,530 @@
         }
 
         function updateAdminStats() {
-            document.getElementById('totalGatePasses').textContent = allGatePasses.length;
-            document.getElementById('totalSuppliers').textContent = allSuppliers.length;
+            const totalGatePasses = allGatePasses.length;
+            const totalSuppliers = allSuppliers.length;
+            
+            // Update main stats (check if elements exist)
+            const totalGatePassesEl = document.getElementById('totalGatePasses');
+            const totalSuppliersEl = document.getElementById('totalSuppliers');
+            const adminTotalGatePassesEl = document.getElementById('adminTotalGatePasses');
+            const adminTotalSuppliersEl = document.getElementById('adminTotalSuppliers');
+            const adminPendingPaymentsEl = document.getElementById('adminPendingPayments');
+            const adminOverduePaymentsEl = document.getElementById('adminOverduePayments');
+            
+            if (totalGatePassesEl) totalGatePassesEl.textContent = totalGatePasses;
+            if (totalSuppliersEl) totalSuppliersEl.textContent = totalSuppliers;
+            if (adminTotalGatePassesEl) adminTotalGatePassesEl.textContent = totalGatePasses;
+            if (adminTotalSuppliersEl) adminTotalSuppliersEl.textContent = totalSuppliers;
+            
+            // Calculate payment stats
+            const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing');
+            let pendingAmount = 0;
+            let overdueAmount = 0;
+            
+            outgoingPasses.forEach(gp => {
+                if (gp.itemRate && gp.ownWeight) {
+                    const amount = gp.itemRate * gp.ownWeight;
+                    if (gp.paymentStatus === 'pending') {
+                        pendingAmount += amount;
+                    } else if (gp.paymentStatus === 'overdue') {
+                        overdueAmount += amount;
+                    }
+                }
+            });
+            
+            if (adminPendingPaymentsEl) adminPendingPaymentsEl.textContent = `₹${pendingAmount.toLocaleString()}`;
+            if (adminOverduePaymentsEl) adminOverduePaymentsEl.textContent = `₹${overdueAmount.toLocaleString()}`;
+            
+            console.log("✅ Admin stats updated");
         }
+
+        // Admin tab switching function
+        function switchAdminTab(tab) {
+            const paymentsTab = document.getElementById('adminPaymentsTab');
+            const partiesTab = document.getElementById('adminPartiesTab');
+            const paymentsContent = document.getElementById('adminPaymentsContent');
+            const partiesContent = document.getElementById('adminPartiesContent');
+            
+            if (tab === 'payments') {
+                // Show payments tab
+                paymentsTab.classList.add('bg-blue-600', 'text-white');
+                paymentsTab.classList.remove('text-gray-600', 'hover:text-gray-800');
+                partiesTab.classList.remove('bg-blue-600', 'text-white');
+                partiesTab.classList.add('text-gray-600', 'hover:text-gray-800');
+                
+                paymentsContent.classList.remove('hidden');
+                partiesContent.classList.add('hidden');
+            } else if (tab === 'parties') {
+                // Show parties tab
+                partiesTab.classList.add('bg-blue-600', 'text-white');
+                partiesTab.classList.remove('text-gray-600', 'hover:text-gray-800');
+                paymentsTab.classList.remove('bg-blue-600', 'text-white');
+                paymentsTab.classList.add('text-gray-600', 'hover:text-gray-800');
+                
+                partiesContent.classList.remove('hidden');
+                paymentsContent.classList.add('hidden');
+                
+                // Ensure party list is rendered when switching to parties tab
+                renderPartyList();
+            } else if (tab === 'payments') {
+                // Show payments tab
+                paymentsTab.classList.add('bg-blue-600', 'text-white');
+                paymentsTab.classList.remove('text-gray-600', 'hover:text-gray-800');
+                partiesTab.classList.remove('bg-blue-600', 'text-white');
+                partiesTab.classList.add('text-gray-600', 'hover:text-gray-800');
+                
+                paymentsContent.classList.remove('hidden');
+                partiesContent.classList.add('hidden');
+                
+                // Ensure payments are loaded when switching to payments tab
+                loadDuePayments();
+            }
+        }
+
+        // Function to load due payments
+        function loadDuePayments() {
+            console.log("🔄 Loading due payments, allGatePasses count:", allGatePasses.length);
+            console.log("🔄 allGatePasses data:", allGatePasses);
+            
+            // Check if allGatePasses is empty
+            if (allGatePasses.length === 0) {
+                console.log("⚠️ No gate passes found in allGatePasses array");
+                console.log("🔄 Attempting to reload data...");
+                
+                // Try to reload data
+                loadGatePassesFromFirebase();
+                
+                // Show message in table
+                const tbody = document.getElementById('duePaymentsTableBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                            No gate passes found. Please create some outgoing gate passes first.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Check each gate pass individually
+            allGatePasses.forEach((gp, index) => {
+                console.log(`Gate Pass ${index}:`, {
+                    id: gp.id,
+                    type: gp.type,
+                    itemRate: gp.itemRate,
+                    ownWeight: gp.ownWeight,
+                    paymentDueDate: gp.paymentDueDate,
+                    brokerName: gp.brokerName,
+                    paymentDueDays: gp.paymentDueDays
+                });
+            });
+            
+            const outgoingPasses = allGatePasses.filter(gp => 
+                gp.type === 'Outgoing' && 
+                gp.itemRate && 
+                gp.ownWeight
+            );
+            
+            console.log("🔄 All outgoing passes (before paymentDueDate filter):", outgoingPasses.length);
+            
+            // Calculate paymentDueDate for passes that don't have it
+            const outgoingPassesWithDueDate = outgoingPasses.map(gp => {
+                if (!gp.paymentDueDate) {
+                    const gatePassDate = new Date(gp.date);
+                    const dueDate = new Date(gatePassDate);
+                    // Use paymentDueDays if available, otherwise default to 30 days
+                    const dueDays = gp.paymentDueDays || 30;
+                    dueDate.setDate(dueDate.getDate() + dueDays);
+                    gp.paymentDueDate = dueDate.toISOString().split('T')[0];
+                    console.log(`Calculated paymentDueDate for ${gp.id}: ${gp.paymentDueDate} (${dueDays} days from ${gp.date})`);
+                }
+                return gp;
+            });
+            
+            console.log("🔄 Outgoing passes with paymentDueDate:", outgoingPassesWithDueDate.length);
+            
+            console.log("🔄 Outgoing passes details:", outgoingPassesWithDueDate);
+            
+            // Debug payment calculations
+            outgoingPassesWithDueDate.forEach(gp => {
+                console.log(`🔍 Payment debug for ${gp.id}:`, {
+                    itemRate: gp.itemRate,
+                    ownWeight: gp.ownWeight,
+                    paymentHistory: gp.paymentHistory,
+                    calculatedTotal: gp.itemRate * gp.ownWeight
+                });
+            });
+            
+            // Calculate payment amounts and status
+            const paymentsWithAmounts = outgoingPassesWithDueDate.map(gatePass => {
+                const totalAmount = gatePass.itemRate * gatePass.ownWeight;
+                const dueDate = new Date(gatePass.paymentDueDate);
+                const today = new Date();
+                const daysOverdue = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
+                
+                // Handle payment history and calculations
+                const paymentHistory = gatePass.paymentHistory || [];
+                const totalReceived = paymentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+                const remainingAmount = totalAmount - totalReceived;
+                
+                // Determine current status
+                let paymentStatus = 'pending';
+                if (totalAmount > 0) {
+                    if (totalReceived >= totalAmount) {
+                        paymentStatus = 'received';
+                    } else if (totalReceived > 0) {
+                        paymentStatus = 'partial';
+                    }
+                }
+                
+                // Check if payment is overdue
+                if (paymentStatus !== 'received' && daysOverdue > 0) {
+                    paymentStatus = 'overdue';
+                }
+                
+                return {
+                    ...gatePass,
+                    totalAmount,
+                    amountReceived: totalReceived,
+                    remainingAmount,
+                    daysOverdue,
+                    paymentStatus,
+                    paymentHistory,
+                    paymentReceivedDate: gatePass.paymentReceivedDate || null,
+                    paymentNotes: gatePass.paymentNotes || ''
+                };
+            });
+            
+            // Apply filters
+            const statusFilter = document.getElementById('paymentStatusFilter').value;
+            const brokerFilter = document.getElementById('brokerFilter').value;
+            const dateFilter = document.getElementById('dueDateFilter').value;
+            
+            let filteredPayments = paymentsWithAmounts;
+            
+            if (statusFilter === 'pending') {
+                filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'pending' && p.daysOverdue === 0);
+            } else if (statusFilter === 'partial') {
+                filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'partial');
+            } else if (statusFilter === 'overdue') {
+                filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus !== 'received' && p.daysOverdue > 0);
+            } else if (statusFilter === 'received') {
+                filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'received');
+            }
+            
+            if (brokerFilter !== 'all') {
+                filteredPayments = filteredPayments.filter(p => p.brokerName === brokerFilter);
+            }
+            
+            if (dateFilter) {
+                filteredPayments = filteredPayments.filter(p => p.paymentDueDate === dateFilter);
+            }
+            
+            // Update summary cards
+            if (typeof updatePaymentSummaryCards === 'function') {
+                updatePaymentSummaryCards(paymentsWithAmounts);
+            }
+            
+            // Update broker filter options
+            if (typeof updateBrokerFilter === 'function') {
+                updateBrokerFilter(paymentsWithAmounts);
+            }
+            
+            // Render table
+            if (typeof renderDuePaymentsTable === 'function') {
+                renderDuePaymentsTable(filteredPayments);
+            } else {
+                console.log("⚠️ renderDuePaymentsTable function not available");
+            }
+        }
+
+        // Helper functions for payment management
+        function updatePaymentSummaryCards(payments) {
+            const overdue = payments.filter(p => p.paymentStatus !== 'received' && p.daysOverdue > 0);
+            const pending = payments.filter(p => p.paymentStatus === 'pending' && p.daysOverdue === 0);
+            const partial = payments.filter(p => p.paymentStatus === 'partial');
+            const received = payments.filter(p => p.paymentStatus === 'received');
+            
+            const overdueAmount = overdue.reduce((sum, p) => sum + p.remainingAmount, 0);
+            const pendingAmount = pending.reduce((sum, p) => sum + p.remainingAmount, 0);
+            const partialAmount = partial.reduce((sum, p) => sum + p.remainingAmount, 0);
+            const receivedAmount = received.reduce((sum, p) => sum + p.totalAmount, 0);
+            const totalAmount = payments.reduce((sum, p) => sum + p.totalAmount, 0);
+            
+            // Update elements only if they exist
+            console.log("🔍 Checking for summary card elements...");
+            
+            const overdueAmountEl = document.getElementById('overdueAmount');
+            const overdueCountEl = document.getElementById('overdueCount');
+            const pendingAmountEl = document.getElementById('pendingAmount');
+            const pendingCountEl = document.getElementById('pendingCount');
+            const partialAmountEl = document.getElementById('partialAmount');
+            const partialCountEl = document.getElementById('partialCount');
+            const receivedAmountEl = document.getElementById('receivedAmount');
+            const receivedCountEl = document.getElementById('receivedCount');
+            const totalAmountEl = document.getElementById('totalAmount');
+            const totalCountEl = document.getElementById('totalCount');
+            
+            console.log("🔍 Element availability:", {
+                overdueAmount: !!overdueAmountEl,
+                overdueCount: !!overdueCountEl,
+                pendingAmount: !!pendingAmountEl,
+                pendingCount: !!pendingCountEl,
+                partialAmount: !!partialAmountEl,
+                partialCount: !!partialCountEl,
+                receivedAmount: !!receivedAmountEl,
+                receivedCount: !!receivedCountEl,
+                totalAmount: !!totalAmountEl,
+                totalCount: !!totalCountEl
+            });
+            
+            if (overdueAmountEl) overdueAmountEl.textContent = `₹${overdueAmount.toLocaleString()}`;
+            if (overdueCountEl) overdueCountEl.textContent = `${overdue.length} payments`;
+            if (pendingAmountEl) pendingAmountEl.textContent = `₹${pendingAmount.toLocaleString()}`;
+            if (pendingCountEl) pendingCountEl.textContent = `${pending.length} payments`;
+            if (partialAmountEl) partialAmountEl.textContent = `₹${partialAmount.toLocaleString()}`;
+            if (partialCountEl) partialCountEl.textContent = `${partial.length} payments`;
+            if (receivedAmountEl) receivedAmountEl.textContent = `₹${receivedAmount.toLocaleString()}`;
+            if (receivedCountEl) receivedCountEl.textContent = `${received.length} payments`;
+            if (totalAmountEl) totalAmountEl.textContent = `₹${totalAmount.toLocaleString()}`;
+            if (totalCountEl) totalCountEl.textContent = `${payments.length} payments`;
+            
+            console.log("✅ Payment summary cards updated");
+        }
+
+        function updateBrokerFilter(payments) {
+            const brokers = [...new Set(payments.map(p => p.brokerName).filter(Boolean))];
+            const brokerSelect = document.getElementById('brokerFilter');
+            
+            if (!brokerSelect) {
+                console.log("⚠️ Broker filter element not found");
+                return;
+            }
+            
+            // Clear existing options except "All Brokers"
+            brokerSelect.innerHTML = '<option value="all">All Brokers</option>';
+            
+            brokers.forEach(broker => {
+                const option = document.createElement('option');
+                option.value = broker;
+                option.textContent = broker;
+                brokerSelect.appendChild(option);
+            });
+            
+            console.log("✅ Broker filter updated with", brokers.length, "brokers");
+        }
+
+        function renderDuePaymentsTable(payments) {
+            console.log("🔄 Rendering payments table with", payments.length, "payments");
+            console.log("🔄 Payments data:", payments);
+            
+            const tbody = document.getElementById('duePaymentsTableBody');
+            if (!tbody) {
+                console.log("⚠️ Due payments table body not found");
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            if (payments.length === 0) {
+                console.log("⚠️ No payments to render");
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                            No payments found matching the current filters.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            payments.forEach(payment => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                const statusBadge = getPaymentStatusBadge(payment);
+                const daysOverdueText = payment.daysOverdue > 0 ? `${payment.daysOverdue} days overdue` : 'On time';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${payment.id}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${payment.item}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${payment.purchasedFrom}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${payment.brokerName || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹${payment.totalAmount.toLocaleString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${payment.paymentDueDate}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <button onclick="openPaymentModal('${payment.id}')" class="text-blue-600 hover:text-blue-800">
+                            Manage
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function getPaymentStatusBadge(payment) {
+            const status = payment.paymentStatus;
+            const daysOverdue = payment.daysOverdue;
+            
+            if (status === 'received') {
+                return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Received</span>';
+            } else if (status === 'partial') {
+                return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Partial</span>';
+            } else if (daysOverdue > 0) {
+                return `<span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Overdue (${daysOverdue}d)</span>`;
+            } else {
+                return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Pending</span>';
+            }
+        }
+
+
+
+        // Function to open payment modal for managing payments
+        function openPaymentModal(gatePassId) {
+            console.log("🔄 Opening payment modal for gate pass:", gatePassId);
+            
+            // Find the gate pass
+            const gatePass = allGatePasses.find(gp => gp.id === gatePassId);
+            if (!gatePass) {
+                console.log("⚠️ Gate pass not found:", gatePassId);
+                showNotification("Gate pass not found", 'error');
+                return;
+            }
+            
+            // Calculate payment details
+            const totalAmount = gatePass.itemRate * gatePass.ownWeight;
+            const paymentHistory = gatePass.paymentHistory || [];
+            const totalReceived = paymentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+            const remainingAmount = totalAmount - totalReceived;
+            
+            // Determine payment status
+            let paymentStatus = 'pending';
+            if (totalAmount > 0) {
+                if (totalReceived >= totalAmount) {
+                    paymentStatus = 'received';
+                } else if (totalReceived > 0) {
+                    paymentStatus = 'partial';
+                }
+            }
+            
+            console.log("💰 Payment calculation:", {
+                gatePassId,
+                totalAmount,
+                totalReceived,
+                remainingAmount,
+                paymentStatus,
+                paymentHistory
+            });
+            
+            // Update modal fields (with null checks)
+            const paymentGatePassIdEl = document.getElementById('paymentGatePassId');
+            const paymentGatePassIdDisplayEl = document.getElementById('paymentGatePassIdDisplay');
+            const paymentAmountDisplayEl = document.getElementById('paymentAmountDisplay');
+            const paymentBrokerDisplayEl = document.getElementById('paymentBrokerDisplay');
+            const paymentDueDateDisplayEl = document.getElementById('paymentDueDateDisplay');
+            const paymentReceivedDateEl = document.getElementById('paymentReceivedDate');
+            const amountReceivedEl = document.getElementById('amountReceived');
+            const remainingAmountEl = document.getElementById('remainingAmount');
+            const paymentStatusDisplayEl = document.getElementById('paymentStatusDisplay');
+            const paymentNotesEl = document.getElementById('paymentNotes');
+            
+            if (paymentGatePassIdEl) paymentGatePassIdEl.value = gatePassId;
+            if (paymentGatePassIdDisplayEl) paymentGatePassIdDisplayEl.value = gatePassId;
+            if (paymentAmountDisplayEl) paymentAmountDisplayEl.value = `₹${totalAmount.toLocaleString()}`;
+            if (paymentBrokerDisplayEl) paymentBrokerDisplayEl.value = gatePass.brokerName || 'N/A';
+            if (paymentDueDateDisplayEl) paymentDueDateDisplayEl.value = gatePass.paymentDueDate || 'N/A';
+            if (paymentReceivedDateEl) paymentReceivedDateEl.value = '';
+            if (amountReceivedEl) amountReceivedEl.value = '';
+            if (remainingAmountEl) remainingAmountEl.value = `₹${remainingAmount.toLocaleString()}`;
+            if (paymentStatusDisplayEl) paymentStatusDisplayEl.value = paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+            if (paymentNotesEl) paymentNotesEl.value = '';
+            
+            // Show modal
+            const paymentModal = document.getElementById('paymentStatusModal');
+            if (paymentModal) {
+                paymentModal.style.display = 'flex';
+            } else {
+                console.log("⚠️ Payment modal not found");
+                showNotification("Payment modal not available", 'error');
+            }
+        }
+
+        // Make function globally accessible
+        window.openPaymentModal = openPaymentModal;
+
+        // Function to add sample payment data for testing
+        function addSamplePaymentData() {
+            console.log("🔄 Adding sample payment data...");
+            
+            // Find outgoing gate passes and add sample payment data
+            const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing' && gp.itemRate && gp.ownWeight);
+            
+            if (outgoingPasses.length === 0) {
+                console.log("⚠️ No outgoing gate passes found to add payment data");
+                showNotification("No outgoing gate passes found. Create some outgoing gate passes first.", 'error');
+                return;
+            }
+            
+            // Add sample payment data to the first few outgoing gate passes
+            outgoingPasses.slice(0, 3).forEach((gatePass, index) => {
+                const totalAmount = gatePass.itemRate * gatePass.ownWeight;
+                
+                // Add different payment scenarios
+                if (index === 0) {
+                    // Fully received payment
+                    gatePass.paymentHistory = [
+                        { amount: totalAmount, date: new Date().toISOString().split('T')[0], notes: 'Full payment received' }
+                    ];
+                    gatePass.paymentStatus = 'received';
+                } else if (index === 1) {
+                    // Partial payment
+                    const partialAmount = Math.floor(totalAmount * 0.6);
+                    gatePass.paymentHistory = [
+                        { amount: partialAmount, date: new Date().toISOString().split('T')[0], notes: 'Partial payment received' }
+                    ];
+                    gatePass.paymentStatus = 'partial';
+                } else if (index === 2) {
+                    // Overdue payment
+                    gatePass.paymentHistory = [];
+                    gatePass.paymentStatus = 'overdue';
+                    // Set due date to past
+                    const pastDate = new Date();
+                    pastDate.setDate(pastDate.getDate() - 10);
+                    gatePass.paymentDueDate = pastDate.toISOString().split('T')[0];
+                }
+                
+                console.log(`✅ Added payment data for ${gatePass.id}:`, {
+                    totalAmount,
+                    paymentHistory: gatePass.paymentHistory,
+                    paymentStatus: gatePass.paymentStatus
+                });
+            });
+            
+            // Reload payments to show the new data
+            loadDuePayments();
+            
+            showNotification("Sample payment data added! Check the payments table.", 'success');
+        }
+
+        // Make function globally accessible
+        window.addSamplePaymentData = addSamplePaymentData;
 
         // Function to remove duplicates from gate passes
         function removeDuplicateGatePasses() {
@@ -2866,6 +3370,15 @@
         reportsViewBtn.addEventListener('click', () => toggleView('reports'));
         adminViewBtn.addEventListener('click', () => toggleView('admin'));
         
+        // Admin tab switching
+        document.getElementById('adminPaymentsTab').addEventListener('click', () => {
+            switchAdminTab('payments');
+        });
+        
+        document.getElementById('adminPartiesTab').addEventListener('click', () => {
+            switchAdminTab('parties');
+        });
+        
         // Party management event listeners
         addPartyForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -2873,6 +3386,8 @@
         });
         
         clearPartyForm.addEventListener('click', clearPartyFormFields);
+        
+        
         
         // Enter key support for form fields
         [newPartyName, newPartyCity, newPartyState, newPartyAddress, newPartyGstPan].forEach(field => {
@@ -3142,6 +3657,7 @@
                 console.log('🔄 Manual refresh triggered');
                 loadOutgoingGatePasses();
             });
+            
             document.getElementById('outgoingDetailsForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 window.saveOutgoingDetails();
@@ -3151,126 +3667,18 @@
             });
 
             // Payment Management Functions
-            function loadDuePayments() {
-                const outgoingPasses = allGatePasses.filter(gp => 
-                    gp.type === 'Outgoing' && 
-                    gp.itemRate && 
-                    gp.outgoingPartyWeight && 
-                    gp.paymentDueDate
-                );
-                
-                // Calculate payment amounts and status
-                const paymentsWithAmounts = outgoingPasses.map(gatePass => {
-                    const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
-                    const dueDate = new Date(gatePass.paymentDueDate);
-                    const today = new Date();
-                    const daysOverdue = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
-                    
-                    // Handle payment history and calculations
-                    const paymentHistory = gatePass.paymentHistory || [];
-                    const totalReceived = paymentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-                    const remainingAmount = totalAmount - totalReceived;
-                    
-                    // Determine current status
-                    let paymentStatus = 'pending';
-                    if (totalReceived >= totalAmount) {
-                        paymentStatus = 'received';
-                    } else if (totalReceived > 0) {
-                        paymentStatus = 'partial';
-                    }
-                    
-                    return {
-                        ...gatePass,
-                        totalAmount,
-                        amountReceived: totalReceived,
-                        remainingAmount,
-                        daysOverdue,
-                        paymentStatus,
-                        paymentHistory,
-                        paymentReceivedDate: gatePass.paymentReceivedDate || null,
-                        paymentNotes: gatePass.paymentNotes || ''
-                    };
-                });
-                
-                // Apply filters
-                const statusFilter = document.getElementById('paymentStatusFilter').value;
-                const brokerFilter = document.getElementById('brokerFilter').value;
-                const dateFilter = document.getElementById('dueDateFilter').value;
-                
-                let filteredPayments = paymentsWithAmounts;
-                
-                if (statusFilter === 'pending') {
-                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'pending' && p.daysOverdue === 0);
-                } else if (statusFilter === 'partial') {
-                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'partial');
-                } else if (statusFilter === 'overdue') {
-                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus !== 'received' && p.daysOverdue > 0);
-                } else if (statusFilter === 'received') {
-                    filteredPayments = paymentsWithAmounts.filter(p => p.paymentStatus === 'received');
-                }
-                
-                if (brokerFilter !== 'all') {
-                    filteredPayments = filteredPayments.filter(p => p.brokerName === brokerFilter);
-                }
-                
-                if (dateFilter) {
-                    filteredPayments = filteredPayments.filter(p => p.paymentDueDate === dateFilter);
-                }
-                
-                // Update summary cards
-                updatePaymentSummaryCards(paymentsWithAmounts);
-                
-                // Update broker filter options
-                updateBrokerFilter(paymentsWithAmounts);
-                
-                // Render table
-                renderDuePaymentsTable(filteredPayments);
-            }
 
-            function updatePaymentSummaryCards(payments) {
-                const overdue = payments.filter(p => p.paymentStatus !== 'received' && p.daysOverdue > 0);
-                const pending = payments.filter(p => p.paymentStatus === 'pending' && p.daysOverdue === 0);
-                const partial = payments.filter(p => p.paymentStatus === 'partial');
-                const received = payments.filter(p => p.paymentStatus === 'received');
-                
-                const overdueAmount = overdue.reduce((sum, p) => sum + p.remainingAmount, 0);
-                const pendingAmount = pending.reduce((sum, p) => sum + p.remainingAmount, 0);
-                const partialAmount = partial.reduce((sum, p) => sum + p.remainingAmount, 0);
-                const receivedAmount = received.reduce((sum, p) => sum + p.totalAmount, 0);
-                const totalAmount = payments.reduce((sum, p) => sum + p.totalAmount, 0);
-                
-                document.getElementById('overdueAmount').textContent = `₹${overdueAmount.toLocaleString()}`;
-                document.getElementById('overdueCount').textContent = `${overdue.length} payments`;
-                document.getElementById('pendingAmount').textContent = `₹${pendingAmount.toLocaleString()}`;
-                document.getElementById('pendingCount').textContent = `${pending.length} payments`;
-                document.getElementById('partialAmount').textContent = `₹${partialAmount.toLocaleString()}`;
-                document.getElementById('partialCount').textContent = `${partial.length} payments`;
-                document.getElementById('receivedAmount').textContent = `₹${receivedAmount.toLocaleString()}`;
-                document.getElementById('receivedCount').textContent = `${received.length} payments`;
-                document.getElementById('totalAmount').textContent = `₹${totalAmount.toLocaleString()}`;
-                document.getElementById('totalCount').textContent = `${payments.length} payments`;
-            }
 
-            function updateBrokerFilter(payments) {
-                const brokers = [...new Set(payments.map(p => p.brokerName).filter(Boolean))];
-                const brokerSelect = document.getElementById('brokerFilter');
-                
-                // Clear existing options except "All Brokers"
-                brokerSelect.innerHTML = '<option value="all">All Brokers</option>';
-                
-                brokers.forEach(broker => {
-                    const option = document.createElement('option');
-                    option.value = broker;
-                    option.textContent = broker;
-                    brokerSelect.appendChild(option);
-                });
-            }
 
             function renderDuePaymentsTable(payments) {
+                console.log("🔄 Rendering payments table with", payments.length, "payments");
+                console.log("🔄 Payments data:", payments);
+                
                 const tbody = document.getElementById('duePaymentsTableBody');
                 tbody.innerHTML = '';
                 
                 if (payments.length === 0) {
+                    console.log("⚠️ No payments to render");
                     tbody.innerHTML = `
                         <tr>
                             <td colspan="8" class="px-6 py-8 text-center text-gray-500">
