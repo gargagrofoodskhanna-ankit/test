@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grain Procurement Payment Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .modal {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .modal.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .message-box {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spinner {
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 bg-gray-100">
+    <!-- Configuration Panel (Hidden by default) -->
+    <div id="config-panel" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h3 class="text-lg font-bold mb-4">Configuration</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Firebase API Key</label>
+                    <input type="text" id="config-api-key" placeholder="your-api-key-here" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
+                    <input type="text" id="config-project-id" placeholder="your-project-id" class="w-full p-2 border border-gray-300 rounded-lg">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="config-sample-data" checked class="mr-2">
+                    <label for="config-sample-data" class="text-sm text-gray-700">Load sample data for testing</label>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="config-cancel" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button id="config-save" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save & Reload</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-spinner" class="absolute inset-0 flex items-center justify-center bg-gray-100 z-50">
+        <div class="spinner w-12 h-12 border-4 rounded-full border-gray-200"></div>
+    </div>
+
+    <div class="relative w-full max-w-5xl p-6 bg-white rounded-xl shadow-lg transition-all duration-300 transform scale-95 md:scale-100" id="main-content" style="display: none;">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Grain Procurement Payment Management</h1>
+        <p class="text-sm text-center text-gray-500 mb-4">Track payments for grain transactions, broker settlements, and procurement deals.</p>
+        
+        <!-- Instructions Panel -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <span class="text-blue-600 text-xl">ℹ️</span>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">Getting Started</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p><strong>Option 1:</strong> Click "⚙️ Config" to set up Firebase for cloud storage</p>
+                        <p><strong>Option 2:</strong> Use local storage mode (data saved in browser) - works immediately!</p>
+                        <p><strong>Sample Data:</strong> The system loads sample grain payment data for testing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-between items-center flex-wrap gap-4 mb-6">
+            <div class="flex items-center space-x-2 text-sm text-gray-600 truncate">
+                <span class="font-medium">User ID:</span>
+                <span id="user-id" class="px-2 py-1 bg-gray-200 rounded-md text-xs font-mono"></span>
+            </div>
+            <div class="flex space-x-3">
+                <button id="add-btn" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Add Payment
+                </button>
+                <button id="filter-btn" class="px-6 py-2 bg-gray-600 text-white font-medium rounded-lg shadow-md hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                    Filter & Search
+                </button>
+                <button id="export-btn" class="px-6 py-2 bg-green-600 text-white font-medium rounded-lg shadow-md hover:bg-green-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    Export Data
+                </button>
+                <button id="config-btn" class="px-6 py-2 bg-purple-600 text-white font-medium rounded-lg shadow-md hover:bg-purple-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                    ⚙️ Config
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-br from-blue-100 to-blue-200 p-4 rounded-lg shadow-sm">
+                <p class="text-lg font-semibold text-blue-800">Total Received</p>
+                <p id="total-income" class="text-2xl font-bold text-blue-900 mt-1">₹0</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-100 to-green-200 p-4 rounded-lg shadow-sm">
+                <p class="text-lg font-semibold text-green-800">Fully Paid</p>
+                <p id="paid-items" class="text-2xl font-bold text-green-900 mt-1">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-yellow-100 to-yellow-200 p-4 rounded-lg shadow-sm">
+                <p class="text-lg font-semibold text-yellow-800">Pending</p>
+                <p id="pending-items" class="text-2xl font-bold text-yellow-900 mt-1">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-red-100 to-red-200 p-4 rounded-lg shadow-sm">
+                <p class="text-lg font-semibold text-red-800">Overdue</p>
+                <p id="overdue-items" class="text-2xl font-bold text-red-900 mt-1">0</p>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+            <table class="min-w-full bg-white text-left text-sm">
+                <thead class="bg-gray-50 text-gray-600 uppercase tracking-wider text-xs">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 font-semibold rounded-tl-lg">Gate Pass ID</th>
+                        <th scope="col" class="px-6 py-3 font-semibold">Broker/Party</th>
+                        <th scope="col" class="px-6 py-3 font-semibold">Grain Type</th>
+                        <th scope="col" class="px-6 py-3 font-semibold">Amount (₹)</th>
+                        <th scope="col" class="px-6 py-3 font-semibold">Status</th>
+                        <th scope="col" class="px-6 py-3 font-semibold">Due Date</th>
+                        <th scope="col" class="px-6 py-3 font-semibold">Progress</th>
+                        <th scope="col" class="px-6 py-3 font-semibold rounded-tr-lg">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="payments-table-body" class="divide-y divide-gray-200">
+                    <!-- Transactions will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Filter Panel -->
+        <div id="filter-panel" class="hidden bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status Filter</label>
+                    <select id="status-filter" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Status</option>
+                        <option value="paid">Fully Paid</option>
+                        <option value="pending">Pending</option>
+                        <option value="overdue">Overdue</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Broker Filter</label>
+                    <select id="broker-filter" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Brokers</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Grain Type</label>
+                    <select id="grain-filter" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Types</option>
+                        <option value="wheat">Wheat</option>
+                        <option value="rice">Rice</option>
+                        <option value="corn">Corn</option>
+                        <option value="barley">Barley</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input type="text" id="search-input" placeholder="Search by Gate Pass ID..." class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button id="clear-filters" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+
+        <div id="no-data-message" class="hidden text-center text-gray-500 py-12">
+            <p class="text-lg font-medium">No payments recorded yet.</p>
+            <p class="text-sm mt-2">Click "Add Payment" to get started.</p>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="add-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="modal-content w-full max-w-lg p-6 bg-white rounded-xl shadow-2xl transform scale-95 opacity-0 transition-all duration-300">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">New Transaction</h2>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition duration-200 text-3xl">&times;</button>
+            </div>
+            <form id="payment-form">
+                <div class="mb-4">
+                    <label for="gate-pass-id" class="block text-gray-700 text-sm font-medium mb-1">Gate Pass ID</label>
+                    <input type="text" id="gate-pass-id" name="gate-pass-id" placeholder="e.g., GP-2024-001" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" required>
+                </div>
+                <div class="mb-4">
+                    <label for="broker-name" class="block text-gray-700 text-sm font-medium mb-1">Broker/Party Name</label>
+                    <input type="text" id="broker-name" name="broker-name" placeholder="e.g., ABC Grain Traders" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" required>
+                </div>
+                <div class="mb-4">
+                    <label for="grain-type" class="block text-gray-700 text-sm font-medium mb-1">Grain Type</label>
+                    <select id="grain-type" name="grain-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" required>
+                        <option value="">Select Grain Type</option>
+                        <option value="wheat">Wheat</option>
+                        <option value="rice">Rice</option>
+                        <option value="corn">Corn</option>
+                        <option value="barley">Barley</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="amount-paid" class="block text-gray-700 text-sm font-medium mb-1">Amount Paid (₹)</label>
+                    <input type="number" id="amount-paid" name="amount-paid" placeholder="e.g., 50000.00" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" step="0.01" required>
+                </div>
+                <div class="mb-4">
+                    <label for="total-amount" class="block text-gray-700 text-sm font-medium mb-1">Total Amount (₹)</label>
+                    <input type="number" id="total-amount" name="total-amount" placeholder="e.g., 100000.00" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" step="0.01" required>
+                </div>
+                <div class="mb-6">
+                    <label for="due-date" class="block text-gray-700 text-sm font-medium mb-1">Due Date</label>
+                    <input type="date" id="due-date" name="due-date" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" required>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Add Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Message Box -->
+    <div id="message-box" class="fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-lg z-[100] hidden message-box">
+        <p id="message-text" class="font-medium"></p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, doc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Enable debug logging for Firestore
+        setLogLevel('debug');
+
+        // ========================================
+        // FIREBASE CONFIGURATION
+        // ========================================
+        // Replace these with your actual Firebase project configuration
+        const firebaseConfig = {
+            apiKey: "your-api-key-here",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "your-sender-id",
+            appId: "your-app-id"
+        };
+        
+        // ========================================
+        // CONFIGURATION OPTIONS
+        // ========================================
+        const appId = 'grain-procurement-payments';
+        const initialAuthToken = null;
+        const ENABLE_SAMPLE_DATA = true; // Set to true to load sample data for testing
+
+        let db, auth;
+        let userId = null;
+
+        const mainContent = document.getElementById('main-content');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const paymentsTableBody = document.getElementById('payments-table-body');
+        const noDataMessage = document.getElementById('no-data-message');
+        const addBtn = document.getElementById('add-btn');
+        const filterBtn = document.getElementById('filter-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const addModal = document.getElementById('add-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const paymentForm = document.getElementById('payment-form');
+        const totalIncomeEl = document.getElementById('total-income');
+        const paidItemsEl = document.getElementById('paid-items');
+        const pendingItemsEl = document.getElementById('pending-items');
+        const overdueItemsEl = document.getElementById('overdue-items');
+        const userIdEl = document.getElementById('user-id');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const filterPanel = document.getElementById('filter-panel');
+        const statusFilter = document.getElementById('status-filter');
+        const brokerFilter = document.getElementById('broker-filter');
+        const grainFilter = document.getElementById('grain-filter');
+        const searchInput = document.getElementById('search-input');
+        const clearFilters = document.getElementById('clear-filters');
+
+        let allPayments = [];
+        let filteredPayments = [];
+
+        // Custom function to show a message box
+        const showMessage = (message, type = 'info') => {
+            messageText.textContent = message;
+            messageBox.className = 'fixed top-4 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-lg z-[100] message-box transition-all duration-300';
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            } else {
+                messageBox.classList.add('bg-gray-100', 'text-gray-800');
+            }
+            messageBox.style.display = 'block';
+
+            setTimeout(() => {
+                messageBox.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                    messageBox.classList.remove('opacity-0', 'scale-95');
+                }, 300);
+            }, 3000);
+        };
+
+        const setupAuth = async () => {
+            try {
+                // Check if Firebase config is properly set
+                if (firebaseConfig.apiKey === "your-api-key-here") {
+                    console.log("Firebase not configured, using local storage mode");
+                    setupLocalStorageMode();
+                    return;
+                }
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdEl.textContent = userId;
+                        mainContent.style.display = 'block';
+                        loadingSpinner.style.display = 'none';
+                        setupRealtimeListener();
+                    } else {
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("Firebase auth error:", error);
+                            showMessage("Authentication failed. Using local storage mode.", 'error');
+                            setupLocalStorageMode();
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                showMessage("Firebase not configured. Using local storage mode.", 'error');
+                setupLocalStorageMode();
+            }
+        };
+
+        // Local storage mode for testing without Firebase
+        const setupLocalStorageMode = () => {
+            userId = 'local-user-' + Date.now();
+            userIdEl.textContent = userId;
+            mainContent.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+            
+            // Load data from local storage
+            loadFromLocalStorage();
+            showMessage("Running in local storage mode. Data will be saved locally.", 'info');
+        };
+
+        const loadFromLocalStorage = () => {
+            const storedPayments = localStorage.getItem('grain-payments');
+            if (storedPayments) {
+                allPayments = JSON.parse(storedPayments);
+            } else if (ENABLE_SAMPLE_DATA) {
+                // Load sample data for testing
+                allPayments = getSampleData();
+                saveToLocalStorage();
+            } else {
+                allPayments = [];
+            }
+
+            if (allPayments.length > 0) {
+                filteredPayments = applyFilters(allPayments);
+                renderPaymentsTable(filteredPayments);
+                updateSummaryCards();
+                updateBrokerFilter();
+            } else {
+                noDataMessage.classList.remove('hidden');
+            }
+        };
+
+        const getSampleData = () => {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const nextWeek = new Date(today);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            const lastWeek = new Date(today);
+            lastWeek.setDate(lastWeek.getDate() - 7);
+
+            return [
+                {
+                    id: 'sample-1',
+                    gatePassId: 'GP-2024-001',
+                    brokerName: 'ABC Grain Traders',
+                    grainType: 'wheat',
+                    amountPaid: 50000,
+                    totalAmount: 100000,
+                    dueDate: lastWeek,
+                    timestamp: lastWeek,
+                    status: 'pending'
+                },
+                {
+                    id: 'sample-2',
+                    gatePassId: 'GP-2024-002',
+                    brokerName: 'XYZ Rice Mills',
+                    grainType: 'rice',
+                    amountPaid: 75000,
+                    totalAmount: 75000,
+                    dueDate: tomorrow,
+                    timestamp: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
+                    status: 'fully paid'
+                },
+                {
+                    id: 'sample-3',
+                    gatePassId: 'GP-2024-003',
+                    brokerName: 'Green Fields Corp',
+                    grainType: 'corn',
+                    amountPaid: 30000,
+                    totalAmount: 80000,
+                    dueDate: lastWeek,
+                    timestamp: new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000),
+                    status: 'overdue'
+                },
+                {
+                    id: 'sample-4',
+                    gatePassId: 'GP-2024-004',
+                    brokerName: 'Golden Harvest Ltd',
+                    grainType: 'barley',
+                    amountPaid: 0,
+                    totalAmount: 60000,
+                    dueDate: nextWeek,
+                    timestamp: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
+                    status: 'pending'
+                },
+                {
+                    id: 'sample-5',
+                    gatePassId: 'GP-2024-005',
+                    brokerName: 'Premium Grains Co',
+                    grainType: 'wheat',
+                    amountPaid: 120000,
+                    totalAmount: 120000,
+                    dueDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000),
+                    timestamp: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000),
+                    status: 'fully paid'
+                }
+            ];
+        };
+
+        const saveToLocalStorage = () => {
+            localStorage.setItem('grain-payments', JSON.stringify(allPayments));
+        };
+
+        const updateSummaryCards = () => {
+            let totalIncome = 0;
+            let paidCount = 0;
+            let pendingCount = 0;
+            let overdueCount = 0;
+
+            allPayments.forEach(payment => {
+                totalIncome += payment.amountPaid;
+                if (payment.status === 'fully paid') {
+                    paidCount++;
+                } else if (payment.status === 'overdue') {
+                    overdueCount++;
+                } else {
+                    pendingCount++;
+                }
+            });
+
+            totalIncomeEl.textContent = `₹${totalIncome.toLocaleString()}`;
+            paidItemsEl.textContent = paidCount;
+            pendingItemsEl.textContent = pendingCount;
+            overdueItemsEl.textContent = overdueCount;
+        };
+
+        const setupRealtimeListener = () => {
+            const paymentsRef = collection(db, `artifacts/${appId}/public/data/payments`);
+            const q = query(paymentsRef);
+
+            onSnapshot(q, (snapshot) => {
+                allPayments = [];
+                let totalIncome = 0;
+                let paidCount = 0;
+                let pendingCount = 0;
+                let overdueCount = 0;
+
+                if (snapshot.docs.length === 0) {
+                    noDataMessage.classList.remove('hidden');
+                    paymentsTableBody.innerHTML = '';
+                } else {
+                    noDataMessage.classList.add('hidden');
+                }
+
+                snapshot.docs.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const docId = docSnap.id;
+                    const balanceDue = data.totalAmount - data.amountPaid;
+                    totalIncome += data.amountPaid;
+
+                    // Calculate due date and overdue status
+                    const dueDate = data.dueDate ? new Date(data.dueDate) : new Date(data.timestamp.seconds * 1000);
+                    const today = new Date();
+                    const isOverdue = dueDate < today && balanceDue > 0;
+
+                    let statusClass = '';
+                    let statusText = '';
+                    if (balanceDue <= 0) {
+                        statusClass = 'bg-green-100 text-green-800';
+                        statusText = 'Fully Paid';
+                        paidCount++;
+                    } else if (isOverdue) {
+                        statusClass = 'bg-red-100 text-red-800';
+                        statusText = 'Overdue';
+                        overdueCount++;
+                    } else {
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                        statusText = 'Pending';
+                        pendingCount++;
+                    }
+
+                    const paymentData = {
+                        id: docId,
+                        gatePassId: data.gatePassId || 'N/A',
+                        brokerName: data.brokerName || data.customerName || 'N/A',
+                        grainType: data.grainType || 'N/A',
+                        amountPaid: data.amountPaid,
+                        totalAmount: data.totalAmount,
+                        balanceDue: balanceDue,
+                        status: statusText.toLowerCase(),
+                        dueDate: dueDate,
+                        isOverdue: isOverdue,
+                        timestamp: data.timestamp
+                    };
+
+                    allPayments.push(paymentData);
+                });
+
+                // Apply filters
+                filteredPayments = applyFilters(allPayments);
+                renderPaymentsTable(filteredPayments);
+
+                // Update broker filter options
+                updateBrokerFilter();
+
+                totalIncomeEl.textContent = `₹${totalIncome.toLocaleString()}`;
+                paidItemsEl.textContent = paidCount;
+                pendingItemsEl.textContent = pendingCount;
+                overdueItemsEl.textContent = overdueCount;
+            }, (error) => {
+                console.error("Error fetching data: ", error);
+                showMessage("Failed to load data. Check console for details.", 'error');
+            });
+
+        };
+
+        // Render payments table
+        const renderPaymentsTable = (payments) => {
+            paymentsTableBody.innerHTML = '';
+            
+            payments.forEach(payment => {
+                const progressPercentage = Math.round((payment.amountPaid / payment.totalAmount) * 100);
+                const statusClass = payment.status === 'fully paid' ? 'bg-green-100 text-green-800' : 
+                                  payment.status === 'overdue' ? 'bg-red-100 text-red-800' : 
+                                  'bg-yellow-100 text-yellow-800';
+                
+                const row = `
+                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                        <td class="px-6 py-4 text-gray-900 font-medium whitespace-nowrap">${payment.gatePassId}</td>
+                        <td class="px-6 py-4 text-gray-700 whitespace-nowrap">${payment.brokerName}</td>
+                        <td class="px-6 py-4 text-gray-700 whitespace-nowrap">${payment.grainType}</td>
+                        <td class="px-6 py-4 text-gray-700 whitespace-nowrap">₹${payment.amountPaid.toLocaleString()} / ₹${payment.totalAmount.toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 inline-flex text-xs font-semibold leading-5 rounded-full ${statusClass}">
+                                ${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500 whitespace-nowrap">${payment.dueDate.toLocaleDateString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-500">${progressPercentage}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button data-id="${payment.id}" data-current-paid="${payment.amountPaid}" data-total-amount="${payment.totalAmount}" class="update-status-btn px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition duration-200">
+                                Update Payment
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                paymentsTableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            // Add event listeners to update buttons
+            document.querySelectorAll('.update-status-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    const currentPaid = parseFloat(e.target.getAttribute('data-current-paid'));
+                    const totalAmount = parseFloat(e.target.getAttribute('data-total-amount'));
+                    
+                    const remaining = totalAmount - currentPaid;
+
+                    if (remaining <= 0) {
+                        showMessage("This item is already fully paid.", "info");
+                        return;
+                    }
+                    
+                    // Use a custom prompt replacement
+                    addModal.querySelector('h2').textContent = "Update Payment";
+                    paymentForm.dataset.mode = 'update';
+                    paymentForm.dataset.docId = id;
+                    paymentForm.dataset.currentPaid = currentPaid;
+                    paymentForm.dataset.totalAmount = totalAmount;
+
+                    addModal.classList.remove('hidden');
+                    setTimeout(() => {
+                        addModal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95');
+                    }, 10);
+                    
+                    document.getElementById('gate-pass-id').value = 'N/A';
+                    document.getElementById('gate-pass-id').disabled = true;
+                    document.getElementById('broker-name').value = 'N/A';
+                    document.getElementById('broker-name').disabled = true;
+                    document.getElementById('grain-type').value = '';
+                    document.getElementById('grain-type').disabled = true;
+                    document.getElementById('total-amount').value = totalAmount;
+                    document.getElementById('total-amount').disabled = true;
+                    document.getElementById('due-date').value = '';
+                    document.getElementById('due-date').disabled = true;
+                    
+                    document.getElementById('amount-paid').value = remaining;
+                    document.getElementById('amount-paid').focus();
+                });
+            });
+        };
+
+        // Apply filters
+        const applyFilters = (payments) => {
+            return payments.filter(payment => {
+                const statusMatch = statusFilter.value === 'all' || payment.status === statusFilter.value;
+                const brokerMatch = brokerFilter.value === 'all' || payment.brokerName === brokerFilter.value;
+                const grainMatch = grainFilter.value === 'all' || payment.grainType.toLowerCase() === grainFilter.value;
+                const searchMatch = searchInput.value === '' || 
+                    payment.gatePassId.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                    payment.brokerName.toLowerCase().includes(searchInput.value.toLowerCase());
+                
+                return statusMatch && brokerMatch && grainMatch && searchMatch;
+            });
+        };
+
+        // Update broker filter options
+        const updateBrokerFilter = () => {
+            const brokers = [...new Set(allPayments.map(p => p.brokerName).filter(Boolean))];
+            brokerFilter.innerHTML = '<option value="all">All Brokers</option>';
+            brokers.forEach(broker => {
+                brokerFilter.innerHTML += `<option value="${broker}">${broker}</option>`;
+            });
+        };
+
+        const addTransaction = async (e) => {
+            e.preventDefault();
+
+            const gatePassId = document.getElementById('gate-pass-id').value;
+            const brokerName = document.getElementById('broker-name').value;
+            const grainType = document.getElementById('grain-type').value;
+            const amountPaid = parseFloat(document.getElementById('amount-paid').value);
+            const totalAmount = parseFloat(document.getElementById('total-amount').value);
+            const dueDate = document.getElementById('due-date').value;
+            
+            if (amountPaid <= 0 || isNaN(amountPaid) || totalAmount <= 0 || isNaN(totalAmount)) {
+                showMessage("Please enter valid amounts.", 'error');
+                return;
+            }
+
+            const mode = paymentForm.dataset.mode || 'add';
+
+            try {
+                if (mode === 'add') {
+                    const newPayment = {
+                        id: 'payment-' + Date.now(),
+                        gatePassId,
+                        brokerName,
+                        grainType,
+                        amountPaid,
+                        totalAmount,
+                        dueDate: new Date(dueDate),
+                        timestamp: new Date(),
+                        status: amountPaid >= totalAmount ? 'fully paid' : 'pending'
+                    };
+
+                    if (db) {
+                        // Firebase mode
+                        await addDoc(collection(db, `artifacts/${appId}/public/data/payments`), {
+                            gatePassId,
+                            brokerName,
+                            grainType,
+                            amountPaid,
+                            totalAmount,
+                            dueDate,
+                            timestamp: new Date()
+                        });
+                    } else {
+                        // Local storage mode
+                        allPayments.push(newPayment);
+                        saveToLocalStorage();
+                        filteredPayments = applyFilters(allPayments);
+                        renderPaymentsTable(filteredPayments);
+                        updateSummaryCards();
+                        updateBrokerFilter();
+                    }
+                    showMessage("Payment added successfully!", 'success');
+                } else if (mode === 'update') {
+                    const docId = paymentForm.dataset.docId;
+                    const currentPaid = parseFloat(paymentForm.dataset.currentPaid);
+                    const newAmountPaid = parseFloat(document.getElementById('amount-paid').value);
+
+                    if (newAmountPaid > totalAmount - currentPaid) {
+                        showMessage("Paid amount cannot exceed the remaining balance.", 'error');
+                        return;
+                    }
+                    
+                    if (db) {
+                        // Firebase mode
+                        const paymentRef = doc(db, `artifacts/${appId}/public/data/payments`, docId);
+                        await updateDoc(paymentRef, {
+                            amountPaid: currentPaid + newAmountPaid
+                        });
+                    } else {
+                        // Local storage mode
+                        const paymentIndex = allPayments.findIndex(p => p.id === docId);
+                        if (paymentIndex !== -1) {
+                            allPayments[paymentIndex].amountPaid = currentPaid + newAmountPaid;
+                            allPayments[paymentIndex].status = allPayments[paymentIndex].amountPaid >= allPayments[paymentIndex].totalAmount ? 'fully paid' : 'pending';
+                            saveToLocalStorage();
+                            filteredPayments = applyFilters(allPayments);
+                            renderPaymentsTable(filteredPayments);
+                            updateSummaryCards();
+                        }
+                    }
+                    showMessage("Payment updated successfully!", 'success');
+                }
+                closeModal();
+                paymentForm.reset();
+            } catch (error) {
+                console.error("Error saving data: ", error);
+                showMessage("Failed to save data. Check console for details.", 'error');
+            }
+        };
+
+        const openModal = () => {
+            addModal.querySelector('h2').textContent = "New Payment";
+            paymentForm.dataset.mode = 'add';
+            document.getElementById('gate-pass-id').disabled = false;
+            document.getElementById('broker-name').disabled = false;
+            document.getElementById('grain-type').disabled = false;
+            document.getElementById('total-amount').disabled = false;
+            document.getElementById('due-date').disabled = false;
+            addModal.classList.remove('hidden');
+            setTimeout(() => {
+                addModal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95');
+                document.getElementById('gate-pass-id').focus();
+            }, 10);
+        };
+
+        const closeModal = () => {
+            addModal.querySelector('.modal-content').classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                addModal.classList.add('hidden');
+                paymentForm.reset();
+            }, 300);
+        };
+
+        // Export functionality
+        const exportData = () => {
+            const csvContent = [
+                ['Gate Pass ID', 'Broker/Party', 'Grain Type', 'Amount Paid', 'Total Amount', 'Status', 'Due Date'],
+                ...filteredPayments.map(p => [
+                    p.gatePassId,
+                    p.brokerName,
+                    p.grainType,
+                    p.amountPaid,
+                    p.totalAmount,
+                    p.status,
+                    p.dueDate.toLocaleDateString()
+                ])
+            ].map(row => row.join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `grain_payments_export_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showMessage("Data exported successfully!", 'success');
+        };
+
+        // Toggle filter panel
+        const toggleFilterPanel = () => {
+            filterPanel.classList.toggle('hidden');
+        };
+
+        // Clear all filters
+        const clearAllFilters = () => {
+            statusFilter.value = 'all';
+            brokerFilter.value = 'all';
+            grainFilter.value = 'all';
+            searchInput.value = '';
+            filteredPayments = applyFilters(allPayments);
+            renderPaymentsTable(filteredPayments);
+        };
+
+        // Configuration functionality
+        const configBtn = document.getElementById('config-btn');
+        const configPanel = document.getElementById('config-panel');
+        const configCancel = document.getElementById('config-cancel');
+        const configSave = document.getElementById('config-save');
+
+        const openConfig = () => {
+            configPanel.classList.remove('hidden');
+            document.getElementById('config-api-key').value = firebaseConfig.apiKey;
+            document.getElementById('config-project-id').value = firebaseConfig.projectId;
+            document.getElementById('config-sample-data').checked = ENABLE_SAMPLE_DATA;
+        };
+
+        const closeConfig = () => {
+            configPanel.classList.add('hidden');
+        };
+
+        const saveConfig = () => {
+            const newApiKey = document.getElementById('config-api-key').value;
+            const newProjectId = document.getElementById('config-project-id').value;
+            const enableSample = document.getElementById('config-sample-data').checked;
+
+            if (newApiKey && newApiKey !== 'your-api-key-here') {
+                firebaseConfig.apiKey = newApiKey;
+                firebaseConfig.projectId = newProjectId;
+                firebaseConfig.authDomain = `${newProjectId}.firebaseapp.com`;
+                firebaseConfig.storageBucket = `${newProjectId}.appspot.com`;
+                
+                // Save to localStorage
+                localStorage.setItem('firebase-config', JSON.stringify(firebaseConfig));
+                localStorage.setItem('enable-sample-data', enableSample);
+                
+                showMessage("Configuration saved! Reloading...", 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showMessage("Please enter valid Firebase configuration.", 'error');
+            }
+        };
+
+        // Event listeners
+        addBtn.addEventListener('click', openModal);
+        filterBtn.addEventListener('click', toggleFilterPanel);
+        exportBtn.addEventListener('click', exportData);
+        configBtn.addEventListener('click', openConfig);
+        configCancel.addEventListener('click', closeConfig);
+        configSave.addEventListener('click', saveConfig);
+        closeModalBtn.addEventListener('click', closeModal);
+        paymentForm.addEventListener('submit', addTransaction);
+        clearFilters.addEventListener('click', clearAllFilters);
+
+        // Filter event listeners
+        statusFilter.addEventListener('change', () => {
+            filteredPayments = applyFilters(allPayments);
+            renderPaymentsTable(filteredPayments);
+        });
+        brokerFilter.addEventListener('change', () => {
+            filteredPayments = applyFilters(allPayments);
+            renderPaymentsTable(filteredPayments);
+        });
+        grainFilter.addEventListener('change', () => {
+            filteredPayments = applyFilters(allPayments);
+            renderPaymentsTable(filteredPayments);
+        });
+        searchInput.addEventListener('input', () => {
+            filteredPayments = applyFilters(allPayments);
+            renderPaymentsTable(filteredPayments);
+        });
+
+        // Close modal when clicking outside
+        addModal.addEventListener('click', (e) => {
+            if (e.target.id === 'add-modal') {
+                closeModal();
+            }
+        });
+
+        // Initialize the application
+        setupAuth();
+    </script>
+</body>
+</html>

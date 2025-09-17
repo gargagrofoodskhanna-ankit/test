@@ -106,7 +106,7 @@
     </div>
 
     <div id="mainApp" class="hidden">
-        <div class="bg-white rounded-3xl shadow-custom w-full max-w-2xl">
+        <div class="bg-white rounded-3xl shadow-custom w-full max-w-7xl">
             <div class="header-bg text-white rounded-t-3xl p-6 md:p-8 text-center shadow-inner">
                 <div class="flex justify-between items-center mb-2">
                     <h1 class="text-3xl md:text-4xl font-bold">Grain Procurement System</h1>
@@ -343,68 +343,196 @@
                 </div>
 
                 <!-- Payments Tab Content -->
-                <div id="adminPaymentsContent" class="admin-tab-content">
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h3 class="text-lg font-semibold mb-4">Due Payments Management</h3>
-                        
-                        <!-- Summary Cards -->
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                            <div class="bg-red-50 p-4 rounded-lg border border-red-200">
-                                <h4 class="text-sm font-medium text-red-800">Overdue</h4>
-                                <p id="overdueAmount" class="text-2xl font-bold text-red-900">₹0</p>
-                                <p id="overdueCount" class="text-xs text-red-600">0 payments</p>
+                <div id="adminPaymentsContent" class="admin-tab-content max-w-none">
+
+                    <!-- Enhanced Summary Cards with Progress Indicators -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-xl border border-red-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-base font-medium text-red-800 mb-2">Overdue Payments</h4>
+                                    <p id="overdueAmount" class="text-4xl font-bold text-red-900">₹0</p>
+                                    <p id="overdueCount" class="text-sm text-red-600 mt-1">0 payments</p>
+                                </div>
+                                <div class="w-16 h-16 bg-red-200 rounded-full flex items-center justify-center">
+                                    <span class="text-3xl">⚠️</span>
+                                </div>
                             </div>
-                            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                                <h4 class="text-sm font-medium text-yellow-800">Pending</h4>
-                                <p id="pendingAmount" class="text-2xl font-bold text-yellow-900">₹0</p>
-                                <p id="pendingCount" class="text-xs text-yellow-600">0 payments</p>
-                            </div>
-                            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                                <h4 class="text-sm font-medium text-orange-800">Partial</h4>
-                                <p id="partialAmount" class="text-2xl font-bold text-orange-900">₹0</p>
-                                <p id="partialCount" class="text-xs text-orange-600">0 payments</p>
-                            </div>
-                            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                                <h4 class="text-sm font-medium text-green-800">Received</h4>
-                                <p id="receivedAmount" class="text-2xl font-bold text-green-900">₹0</p>
-                                <p id="receivedCount" class="text-xs text-green-600">0 payments</p>
+                            <div class="mt-4">
+                                <div class="w-full bg-red-200 rounded-full h-3">
+                                    <div id="overdueProgress" class="bg-red-500 h-3 rounded-full" style="width: 0%"></div>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Filter Options -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <select id="paymentStatusFilter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="all">All Payments</option>
-                                <option value="pending">Pending Payments</option>
-                                <option value="partial">Partial Payments</option>
-                                <option value="overdue">Overdue Payments</option>
-                                <option value="received">Fully Received</option>
-                            </select>
-                            <select id="brokerFilter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="all">All Brokers</option>
-                            </select>
-                            <input type="date" id="dueDateFilter" class="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Filter by due date">
+                        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-8 rounded-xl border border-yellow-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-base font-medium text-yellow-800 mb-2">Pending Payments</h4>
+                                    <p id="pendingAmount" class="text-4xl font-bold text-yellow-900">₹0</p>
+                                    <p id="pendingCount" class="text-sm text-yellow-600 mt-1">0 payments</p>
+                                </div>
+                                <div class="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center">
+                                    <span class="text-3xl">⏳</span>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="w-full bg-yellow-200 rounded-full h-3">
+                                    <div id="pendingProgress" class="bg-yellow-500 h-3 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Due Payments Table -->
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="font-medium">Due Payments</h4>
-                            <button onclick="addSamplePaymentData()" class="px-3 py-1 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors text-sm">
-                                💰 Add Sample Payments
-                            </button>
+                        <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-8 rounded-xl border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-base font-medium text-orange-800 mb-2">Partial Payments</h4>
+                                    <p id="partialAmount" class="text-4xl font-bold text-orange-900">₹0</p>
+                                    <p id="partialCount" class="text-sm text-orange-600 mt-1">0 payments</p>
+                                </div>
+                                <div class="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center">
+                                    <span class="text-3xl">🔄</span>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="w-full bg-orange-200 rounded-full h-3">
+                                    <div id="partialProgress" class="bg-orange-500 h-3 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-base font-medium text-green-800 mb-2">Received Payments</h4>
+                                    <p id="receivedAmount" class="text-4xl font-bold text-green-900">₹0</p>
+                                    <p id="receivedCount" class="text-sm text-green-600 mt-1">0 payments</p>
+                                </div>
+                                <div class="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center">
+                                    <span class="text-3xl">✅</span>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="w-full bg-green-200 rounded-full h-3">
+                                    <div id="receivedProgress" class="bg-green-500 h-3 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Search and Filter Panel -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4 lg:mb-0">Payment Search & Filters</h4>
+                            <div class="flex space-x-2">
+                                <button onclick="clearAllFiltersEnhanced()" class="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                    Clear Filters
+                                </button>
+                                <button onclick="toggleAdvancedSearchEnhanced()" class="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    Advanced Search
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Basic Filters -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                                <select id="paymentStatusFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="all">All Payments</option>
+                                    <option value="pending">Pending Payments</option>
+                                    <option value="partial">Partial Payments</option>
+                                    <option value="overdue">Overdue Payments</option>
+                                    <option value="received">Fully Received</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Broker</label>
+                                <select id="brokerFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="all">All Brokers</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Date Range</label>
+                                <input type="date" id="dueDateFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Amount Range</label>
+                                <select id="amountRangeFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="all">All Amounts</option>
+                                    <option value="0-10000">₹0 - ₹10,000</option>
+                                    <option value="10000-50000">₹10,000 - ₹50,000</option>
+                                    <option value="50000-100000">₹50,000 - ₹1,00,000</option>
+                                    <option value="100000+">Above ₹1,00,000</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Search Panel (Initially Hidden) -->
+                        <div id="advancedSearchPanel" class="hidden border-t pt-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Search by Gate Pass ID</label>
+                                    <input type="text" id="gatePassIdSearch" placeholder="Enter Gate Pass ID" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                                    <select id="paymentMethodFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="all">All Methods</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="cheque">Cheque</option>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="upi">UPI</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Days Overdue</label>
+                                    <select id="overdueDaysFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="all">All</option>
+                                        <option value="1-7">1-7 days</option>
+                                        <option value="8-30">8-30 days</option>
+                                        <option value="31-90">31-90 days</option>
+                                        <option value="90+">90+ days</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Bar -->
+                        <div class="mt-4">
+                            <div class="relative">
+                                <input type="text" id="searchInput" placeholder="Search payments by broker name, gate pass ID, or amount..." class="w-full p-4 pl-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <span class="text-gray-400">🔍</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Payments Table -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-lg font-semibold text-gray-900">Payment Records</h4>
+                                <div class="flex items-center space-x-4">
+                                    <button onclick="addNewPaymentEnhanced()" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                        + Add Payment
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gate Pass ID</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sold To</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Broker</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (₹)</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Status</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-32">Gate Pass ID</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-48">Broker/Party</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-32">Grain Type</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-40">Amount (₹)</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-32">Due Date</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-24">Status</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-32">Progress</th>
+                                        <th class="px-8 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="duePaymentsTableBody" class="bg-white divide-y divide-gray-200">
@@ -416,7 +544,7 @@
                 </div>
 
                 <!-- Parties Tab Content -->
-                <div id="adminPartiesContent" class="admin-tab-content hidden">
+                <div id="adminPartiesContent" class="admin-tab-content hidden max-w-none">
                     <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h3 class="text-lg font-semibold mb-4">Party Management</h3>
                         
@@ -2655,8 +2783,8 @@
             let overdueAmount = 0;
             
             outgoingPasses.forEach(gp => {
-                if (gp.itemRate && gp.ownWeight) {
-                    const amount = gp.itemRate * gp.ownWeight;
+                if (gp.itemRate && gp.outgoingPartyWeight) {
+                    const amount = gp.itemRate * gp.outgoingPartyWeight;
                     if (gp.paymentStatus === 'pending') {
                         pendingAmount += amount;
                     } else if (gp.paymentStatus === 'overdue') {
@@ -2718,6 +2846,10 @@
         function loadDuePayments() {
             console.log("🔄 Loading due payments, allGatePasses count:", allGatePasses.length);
             console.log("🔄 allGatePasses data:", allGatePasses);
+            
+            // Use enhanced payment data loading
+            loadEnhancedPaymentData();
+            return;
             
             // Check if allGatePasses is empty
             if (allGatePasses.length === 0) {
@@ -2784,13 +2916,13 @@
                     itemRate: gp.itemRate,
                     ownWeight: gp.ownWeight,
                     paymentHistory: gp.paymentHistory,
-                    calculatedTotal: gp.itemRate * gp.ownWeight
+                    calculatedTotal: gp.itemRate * gp.outgoingPartyWeight
                 });
             });
             
             // Calculate payment amounts and status
             const paymentsWithAmounts = outgoingPassesWithDueDate.map(gatePass => {
-                const totalAmount = gatePass.itemRate * gatePass.ownWeight;
+                const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
                 const dueDate = new Date(gatePass.paymentDueDate);
                 const today = new Date();
                 const daysOverdue = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
@@ -3041,7 +3173,7 @@
             }
             
             // Calculate payment details
-            const totalAmount = gatePass.itemRate * gatePass.ownWeight;
+            const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
             const paymentHistory = gatePass.paymentHistory || [];
             const totalReceived = paymentHistory.reduce((sum, payment) => sum + (payment.amount || 0), 0);
             const remainingAmount = totalAmount - totalReceived;
@@ -3106,7 +3238,7 @@
             console.log("🔄 Adding sample payment data...");
             
             // Find outgoing gate passes and add sample payment data
-            const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing' && gp.itemRate && gp.ownWeight);
+            const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing' && gp.itemRate && gp.outgoingPartyWeight);
             
             if (outgoingPasses.length === 0) {
                 console.log("⚠️ No outgoing gate passes found to add payment data");
@@ -3116,7 +3248,7 @@
             
             // Add sample payment data to the first few outgoing gate passes
             outgoingPasses.slice(0, 3).forEach((gatePass, index) => {
-                const totalAmount = gatePass.itemRate * gatePass.ownWeight;
+                const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
                 
                 // Add different payment scenarios
                 if (index === 0) {
@@ -3664,6 +3796,341 @@
             });
             document.getElementById('cancelOutgoingDetails').addEventListener('click', function() {
                 document.getElementById('outgoingDetailsModal').style.display = 'none';
+            });
+
+            // Enhanced Payment Management Functions
+            let enhancedPayments = [];
+            let filteredEnhancedPayments = [];
+
+            // Enhanced functions for the new UI
+            function clearAllFiltersEnhanced() {
+                document.getElementById('paymentStatusFilter').value = 'all';
+                document.getElementById('brokerFilter').value = 'all';
+                document.getElementById('dueDateFilter').value = '';
+                document.getElementById('amountRangeFilter').value = 'all';
+                document.getElementById('gatePassIdSearch').value = '';
+                document.getElementById('searchInput').value = '';
+                
+                filteredEnhancedPayments = applyEnhancedFilters(enhancedPayments);
+                renderEnhancedPaymentsTable(filteredEnhancedPayments);
+            }
+
+            function toggleAdvancedSearchEnhanced() {
+                const panel = document.getElementById('advancedSearchPanel');
+                const button = event.target;
+                
+                if (panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    button.textContent = 'Hide Advanced Search';
+                    button.classList.remove('bg-blue-600');
+                    button.classList.add('bg-gray-600');
+                } else {
+                    panel.classList.add('hidden');
+                    button.textContent = 'Advanced Search';
+                    button.classList.remove('bg-gray-600');
+                    button.classList.add('bg-blue-600');
+                }
+            }
+
+            function addNewPaymentEnhanced() {
+                // Use existing payment modal
+                openPaymentModal();
+            }
+
+            function exportPaymentsEnhanced() {
+                const csvContent = [
+                    ['Gate Pass ID', 'Broker/Party', 'Grain Type', 'Amount Paid', 'Total Amount', 'Status', 'Due Date'],
+                    ...filteredEnhancedPayments.map(p => [
+                        p.gatePassId,
+                        p.brokerName,
+                        p.grainType,
+                        p.amountPaid,
+                        p.totalAmount,
+                        p.status,
+                        p.dueDate.toLocaleDateString()
+                    ])
+                ].map(row => row.join(',')).join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `payment_export_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showNotification('Payment data exported successfully!', 'success');
+            }
+
+            // Apply enhanced filters
+            function applyEnhancedFilters(payments) {
+                const statusFilter = document.getElementById('paymentStatusFilter').value;
+                const brokerFilter = document.getElementById('brokerFilter').value;
+                const dueDateFilter = document.getElementById('dueDateFilter').value;
+                const amountRangeFilter = document.getElementById('amountRangeFilter').value;
+                const gatePassIdSearch = document.getElementById('gatePassIdSearch').value.toLowerCase();
+                const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+                return payments.filter(payment => {
+                    // Status filter
+                    if (statusFilter !== 'all') {
+                        if (statusFilter === 'overdue' && payment.status !== 'overdue') return false;
+                        if (statusFilter === 'pending' && payment.status !== 'pending') return false;
+                        if (statusFilter === 'partial' && payment.status !== 'partial') return false;
+                        if (statusFilter === 'received' && payment.status !== 'received') return false;
+                    }
+
+                    // Broker filter
+                    if (brokerFilter !== 'all' && payment.brokerName !== brokerFilter) return false;
+
+                    // Due date filter
+                    if (dueDateFilter && payment.dueDate.toISOString().split('T')[0] !== dueDateFilter) return false;
+
+                    // Amount range filter
+                    if (amountRangeFilter !== 'all') {
+                        const amount = payment.totalAmount;
+                        switch (amountRangeFilter) {
+                            case '0-10000':
+                                if (amount < 0 || amount > 10000) return false;
+                                break;
+                            case '10000-50000':
+                                if (amount < 10000 || amount > 50000) return false;
+                                break;
+                            case '50000-100000':
+                                if (amount < 50000 || amount > 100000) return false;
+                                break;
+                            case '100000+':
+                                if (amount < 100000) return false;
+                                break;
+                        }
+                    }
+
+                    // Gate pass ID search
+                    if (gatePassIdSearch && !payment.gatePassId.toLowerCase().includes(gatePassIdSearch)) return false;
+
+                    // General search
+                    if (searchInput) {
+                        const searchableText = [
+                            payment.gatePassId,
+                            payment.brokerName,
+                            payment.grainType,
+                            payment.totalAmount.toString(),
+                            payment.status
+                        ].join(' ').toLowerCase();
+                        
+                        if (!searchableText.includes(searchInput)) return false;
+                    }
+
+                    return true;
+                });
+            }
+
+            // Render enhanced payments table
+            function renderEnhancedPaymentsTable(payments) {
+                const tbody = document.getElementById('duePaymentsTableBody');
+                tbody.innerHTML = '';
+                
+                if (payments.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="px-8 py-16 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <span class="text-5xl mb-4">📊</span>
+                                    <p class="text-xl font-medium mb-2">No payments found</p>
+                                    <p class="text-sm text-gray-400">Try adjusting your filters or add some sample data</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                payments.forEach(payment => {
+                    const progressPercentage = Math.round((payment.amountPaid / payment.totalAmount) * 100);
+                    const statusClass = payment.status === 'received' ? 'bg-green-100 text-green-800' : 
+                                      payment.status === 'overdue' ? 'bg-red-100 text-red-800' : 
+                                      payment.status === 'partial' ? 'bg-orange-100 text-orange-800' :
+                                      'bg-yellow-100 text-yellow-800';
+                    
+                    const row = `
+                        <tr class="hover:bg-gray-50 transition-colors duration-200">
+                            <td class="px-8 py-4 text-gray-900 font-medium whitespace-nowrap">${payment.gatePassId}</td>
+                            <td class="px-8 py-4 text-gray-700 whitespace-nowrap">${payment.brokerName}</td>
+                            <td class="px-8 py-4 text-gray-700 whitespace-nowrap">${payment.grainType}</td>
+                            <td class="px-8 py-4 text-gray-700 whitespace-nowrap">₹${payment.amountPaid.toLocaleString()} / ₹${payment.totalAmount.toLocaleString()}</td>
+                            <td class="px-8 py-4 text-gray-500 whitespace-nowrap">${payment.dueDate.toLocaleDateString()}</td>
+                            <td class="px-8 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 inline-flex text-xs font-semibold leading-5 rounded-full ${statusClass}">
+                                    ${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                                </span>
+                            </td>
+                            <td class="px-8 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 mr-3">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500 font-medium">${progressPercentage}%</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-4 whitespace-nowrap">
+                                <div class="flex space-x-3">
+                                    <button onclick="openPaymentModal('${payment.gatePassId}')" 
+                                            class="px-3 py-1 text-blue-600 hover:text-blue-900 text-sm font-medium hover:bg-blue-50 rounded-md transition-colors">Manage</button>
+                                    <button onclick="viewPaymentDetails('${payment.gatePassId}')" 
+                                            class="px-3 py-1 text-gray-600 hover:text-gray-900 text-sm font-medium hover:bg-gray-50 rounded-md transition-colors">View</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+
+            // Update enhanced summary cards with progress indicators
+            function updateEnhancedSummaryCards() {
+                let totalReceived = 0;
+                let paidCount = 0;
+                let pendingCount = 0;
+                let partialCount = 0;
+                let overdueCount = 0;
+                let totalAmount = 0;
+
+                enhancedPayments.forEach(payment => {
+                    totalReceived += payment.amountPaid;
+                    totalAmount += payment.totalAmount;
+                    
+                    if (payment.status === 'received') {
+                        paidCount++;
+                    } else if (payment.status === 'overdue') {
+                        overdueCount++;
+                    } else if (payment.status === 'partial') {
+                        partialCount++;
+                    } else {
+                        pendingCount++;
+                    }
+                });
+
+                // Update amounts
+                document.getElementById('receivedAmount').textContent = `₹${totalReceived.toLocaleString()}`;
+                document.getElementById('overdueAmount').textContent = `₹${enhancedPayments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.totalAmount, 0).toLocaleString()}`;
+                document.getElementById('pendingAmount').textContent = `₹${enhancedPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.totalAmount, 0).toLocaleString()}`;
+                document.getElementById('partialAmount').textContent = `₹${enhancedPayments.filter(p => p.status === 'partial').reduce((sum, p) => sum + p.totalAmount, 0).toLocaleString()}`;
+
+                // Update counts
+                document.getElementById('receivedCount').textContent = paidCount;
+                document.getElementById('overdueCount').textContent = overdueCount;
+                document.getElementById('pendingCount').textContent = pendingCount;
+                document.getElementById('partialCount').textContent = partialCount;
+
+                // Update progress bars
+                const receivedProgress = totalAmount > 0 ? (totalReceived / totalAmount) * 100 : 0;
+                const overdueProgress = totalAmount > 0 ? (enhancedPayments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.totalAmount, 0) / totalAmount) * 100 : 0;
+                const pendingProgress = totalAmount > 0 ? (enhancedPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.totalAmount, 0) / totalAmount) * 100 : 0;
+                const partialProgress = totalAmount > 0 ? (enhancedPayments.filter(p => p.status === 'partial').reduce((sum, p) => sum + p.totalAmount, 0) / totalAmount) * 100 : 0;
+
+                document.getElementById('receivedProgress').style.width = `${receivedProgress}%`;
+                document.getElementById('overdueProgress').style.width = `${overdueProgress}%`;
+                document.getElementById('pendingProgress').style.width = `${pendingProgress}%`;
+                document.getElementById('partialProgress').style.width = `${partialProgress}%`;
+            }
+
+            // Load enhanced payment data
+            function loadEnhancedPaymentData() {
+                console.log("🔄 Loading enhanced payment data from gate passes");
+                
+                enhancedPayments = [];
+                
+                // Process all gate passes to create payment records
+                allGatePasses.forEach(gatePass => {
+                    if (gatePass.type === 'Outgoing' && gatePass.itemRate && gatePass.outgoingPartyWeight) {
+                        const totalAmount = gatePass.itemRate * gatePass.outgoingPartyWeight;
+                        const paymentHistory = gatePass.paymentHistory || [];
+                        const totalReceived = paymentHistory.reduce((sum, p) => sum + (p.amount || 0), 0);
+                        
+                        // Calculate due date (30 days from outgoing date)
+                        const dueDate = new Date(gatePass.outgoingDate);
+                        dueDate.setDate(dueDate.getDate() + 30);
+                        
+                        const today = new Date();
+                        const daysOverdue = Math.max(0, Math.floor((today - dueDate) / (1000 * 60 * 60 * 24)));
+                        
+                        let status = 'pending';
+                        if (totalReceived >= totalAmount) {
+                            status = 'received';
+                        } else if (totalReceived > 0) {
+                            status = 'partial';
+                        } else if (daysOverdue > 0) {
+                            status = 'overdue';
+                        }
+
+                        const paymentData = {
+                            id: gatePass.id,
+                            gatePassId: gatePass.id,
+                            brokerName: gatePass.brokerName || 'N/A',
+                            grainType: gatePass.itemName || 'N/A',
+                            amountPaid: totalReceived,
+                            totalAmount: totalAmount,
+                            dueDate: dueDate,
+                            status: status,
+                            daysOverdue: daysOverdue,
+                            paymentHistory: paymentHistory,
+                            originalGatePass: gatePass
+                        };
+
+                        enhancedPayments.push(paymentData);
+                    }
+                });
+
+                // Apply filters and render
+                filteredEnhancedPayments = applyEnhancedFilters(enhancedPayments);
+                renderEnhancedPaymentsTable(filteredEnhancedPayments);
+                updateEnhancedSummaryCards();
+                updateBrokerFilterEnhanced();
+                
+                console.log("✅ Enhanced payment data loaded:", enhancedPayments.length, "payments");
+            }
+
+            // Update broker filter for enhanced UI
+            function updateBrokerFilterEnhanced() {
+                const brokers = [...new Set(enhancedPayments.map(p => p.brokerName).filter(Boolean))];
+                const brokerSelect = document.getElementById('brokerFilter');
+                
+                brokerSelect.innerHTML = '<option value="all">All Brokers</option>';
+                brokers.forEach(broker => {
+                    brokerSelect.innerHTML += `<option value="${broker}">${broker}</option>`;
+                });
+            }
+
+            // Make enhanced functions globally accessible
+            window.clearAllFiltersEnhanced = clearAllFiltersEnhanced;
+            window.toggleAdvancedSearchEnhanced = toggleAdvancedSearchEnhanced;
+            window.addNewPaymentEnhanced = addNewPaymentEnhanced;
+            window.exportPaymentsEnhanced = exportPaymentsEnhanced;
+            window.loadEnhancedPaymentData = loadEnhancedPaymentData;
+
+            // Add event listeners for enhanced filters
+            document.addEventListener('DOMContentLoaded', function() {
+                const enhancedFilters = [
+                    'paymentStatusFilter',
+                    'brokerFilter', 
+                    'dueDateFilter',
+                    'amountRangeFilter',
+                    'gatePassIdSearch',
+                    'searchInput'
+                ];
+                
+                enhancedFilters.forEach(filterId => {
+                    const element = document.getElementById(filterId);
+                    if (element) {
+                        element.addEventListener('change', () => {
+                            filteredEnhancedPayments = applyEnhancedFilters(enhancedPayments);
+                            renderEnhancedPaymentsTable(filteredEnhancedPayments);
+                        });
+                        element.addEventListener('input', () => {
+                            filteredEnhancedPayments = applyEnhancedFilters(enhancedPayments);
+                            renderEnhancedPaymentsTable(filteredEnhancedPayments);
+                        });
+                    }
+                });
             });
 
             // Payment Management Functions
