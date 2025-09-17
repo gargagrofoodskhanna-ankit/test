@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incomplete Gate Pass Filter Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Incomplete Gate Pass Filter Test</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Data</h2>
+            <div id="testResults" class="space-y-4"></div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Filter Logic Test</h2>
+            <button id="testBtn" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                Run Filter Test
+            </button>
+            <div id="filterResults" class="mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test data - simulating different gate pass states
+        const testGatePasses = [
+            {
+                id: '1',
+                type: 'Outgoing',
+                item: 'Maize',
+                itemRate: 2500,
+                brokerName: 'John Doe',
+                paymentDueDays: 30
+            },
+            {
+                id: '2',
+                type: 'Outgoing',
+                item: 'Wheat',
+                itemRate: 2800,
+                brokerName: null, // Missing broker name
+                paymentDueDays: 15
+            },
+            {
+                id: '3',
+                type: 'Outgoing',
+                item: 'Rice',
+                itemRate: null, // Missing item rate
+                brokerName: 'Jane Smith',
+                paymentDueDays: 20
+            },
+            {
+                id: '4',
+                type: 'Outgoing',
+                item: 'Maize',
+                itemRate: 2600,
+                brokerName: 'Bob Wilson',
+                paymentDueDays: null // Missing payment due days
+            },
+            {
+                id: '5',
+                type: 'Outgoing',
+                item: 'Wheat',
+                // Missing all additional details
+            },
+            {
+                id: '6',
+                type: 'Incoming', // Should not appear in outgoing filter
+                item: 'Maize',
+                itemRate: 2500,
+                brokerName: 'Test Broker',
+                paymentDueDays: 30
+            }
+        ];
+
+        // Copy the isOutgoingDetailsComplete function from the main app
+        function isOutgoingDetailsComplete(gatePass) {
+            return gatePass && 
+                   gatePass.itemRate && 
+                   gatePass.brokerName && 
+                   gatePass.paymentDueDays;
+        }
+
+        function runTest() {
+            const resultsDiv = document.getElementById('filterResults');
+            resultsDiv.innerHTML = '';
+
+            // Filter outgoing gate passes
+            const outgoingPasses = testGatePasses.filter(gp => gp.type === 'Outgoing');
+            
+            // Filter incomplete gate passes
+            const incompletePasses = outgoingPasses.filter(gp => !isOutgoingDetailsComplete(gp));
+            
+            // Filter complete gate passes
+            const completePasses = outgoingPasses.filter(gp => isOutgoingDetailsComplete(gp));
+
+            resultsDiv.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-blue-800">Total Outgoing</h3>
+                        <p class="text-2xl font-bold text-blue-600">${outgoingPasses.length}</p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-yellow-800">Incomplete</h3>
+                        <p class="text-2xl font-bold text-yellow-600">${incompletePasses.length}</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-green-800">Complete</h3>
+                        <p class="text-2xl font-bold text-green-600">${completePasses.length}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-semibold mb-2">Incomplete Gate Passes Details:</h4>
+                    <div class="space-y-2">
+                        ${incompletePasses.map(gp => `
+                            <div class="bg-yellow-100 p-3 rounded border-l-4 border-yellow-400">
+                                <p><strong>ID:</strong> ${gp.id} | <strong>Item:</strong> ${gp.item}</p>
+                                <p class="text-sm text-gray-600">
+                                    Rate: ${gp.itemRate ? '✅' : '❌'} | 
+                                    Broker: ${gp.brokerName ? '✅' : '❌'} | 
+                                    Due Days: ${gp.paymentDueDays ? '✅' : '❌'}
+                                </p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Display test data
+        function displayTestData() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = testGatePasses.map(gp => `
+                <div class="bg-gray-50 p-3 rounded border">
+                    <p><strong>ID:</strong> ${gp.id} | <strong>Type:</strong> ${gp.type} | <strong>Item:</strong> ${gp.item}</p>
+                    <p class="text-sm text-gray-600">
+                        Rate: ${gp.itemRate || 'Missing'} | 
+                        Broker: ${gp.brokerName || 'Missing'} | 
+                        Due Days: ${gp.paymentDueDays || 'Missing'}
+                    </p>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        displayTestData();
+        document.getElementById('testBtn').addEventListener('click', runTest);
+    </script>
+</body>
+</html>

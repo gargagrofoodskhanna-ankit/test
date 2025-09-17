@@ -1,0 +1,94 @@
+GRAIN PROCUREMENT SYSTEM - DATABASE SCHEMA VISUALIZATION
+========================================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                        FIREBASE FIRESTORE                      │
+│                     (Cloud Database)                           │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   COLLECTION    │    │   COLLECTION    │    │   COLLECTION    │
+│     users       │    │   suppliers     │    │  gate_passes    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   DOCUMENTS     │    │   DOCUMENTS     │    │   DOCUMENTS     │
+│                 │    │                 │    │                 │
+│ • username      │    │ • name          │    │ • id            │
+│ • password      │    │ • city          │    │ • type          │
+│ • name          │    │ • state         │    │ • item          │
+│ • role          │    │ • address       │    │ • purchasedFrom │
+│ • email         │    │ • gstPan        │    │ • truckNumber   │
+│ • isActive      │    │ • createdAt     │    │ • date          │
+│ • createdAt     │    │ • createdBy     │    │ • partyWeight   │
+└─────────────────┘    │ • createdByRole │    │ • ownWeight     │
+                       └─────────────────┘    │ • remarks       │
+                                              │ • userId        │
+                                              │ • userRole      │
+                                              │ • createdAt     │
+                                              │ • itemRate      │
+                                              │ • brokerName    │
+                                              │ • soldTo        │
+                                              │ • dueDate       │
+                                              │ • paymentStatus │
+                                              │ • amountReceived│
+                                              │ • totalAmount   │
+                                              └─────────────────┘
+
+RELATIONSHIPS:
+==============
+
+users (1) ──────────── (many) gate_passes
+  │                           │
+  │                           │
+  └── createdBy ──────────────┘
+
+suppliers (1) ───────── (many) gate_passes
+  │                           │
+  │                           │
+  └── name ───────────────────┘
+       (purchasedFrom)
+
+USER ROLES:
+===========
+┌─────────┬─────────────────────────────────────────┐
+│  Role   │              Permissions                │
+├─────────┼─────────────────────────────────────────┤
+│ admin   │ Full CRUD access to all features        │
+│ user1   │ Full CRUD access to all features        │
+│ user2   │ Read-only access (view only)            │
+└─────────┴─────────────────────────────────────────┘
+
+GATE PASS TYPES:
+===============
+┌───────────┬──────────────────────────────────────┐
+│   Type    │              Fields                  │
+├───────────┼──────────────────────────────────────┤
+│ Incoming  │ • partyWeight (required)             │
+│           │ • purchasedFrom                      │
+│           │ • Basic transaction fields           │
+├───────────┼──────────────────────────────────────┤
+│ Outgoing  │ • itemRate (required)                │
+│           │ • brokerName (required)              │
+│           │ • soldTo (required)                  │
+│           │ • dueDate (required)                 │
+│           │ • Payment tracking fields            │
+└───────────┴──────────────────────────────────────┘
+
+PAYMENT STATUS:
+==============
+┌─────────────┬────────────────────────────────────┐
+│   Status    │              Description           │
+├─────────────┼────────────────────────────────────┤
+│ pending     │ No payment received                │
+│ partial     │ Partial payment received           │
+│ received    │ Full payment received              │
+│ overdue     │ Payment past due date              │
+└─────────────┴────────────────────────────────────┘
+
+REAL-TIME FEATURES:
+==================
+• Firebase listeners for automatic UI updates
+• Offline support with sync when connection restored
+• Multi-user collaboration with live updates
+• Audit trail with timestamps and user tracking

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Reports Section</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Debug Reports Section</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Data Creation</h2>
+            <button id="createTestData" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 mb-4">
+                Create Test Gate Passes
+            </button>
+            <div id="testDataStatus" class="text-sm text-gray-600"></div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Filter Test</h2>
+            <button id="testFilter" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 mb-4">
+                Test Incomplete Filter
+            </button>
+            <div id="filterResults" class="space-y-4"></div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Console Logs</h2>
+            <div id="consoleLogs" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
+                <!-- Console logs will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock the allGatePasses array
+        let allGatePasses = [];
+
+        // Copy the isOutgoingDetailsComplete function
+        function isOutgoingDetailsComplete(gatePass) {
+            return gatePass && 
+                   gatePass.itemRate && 
+                   gatePass.brokerName && 
+                   gatePass.paymentDueDays;
+        }
+
+        // Copy the loadOutgoingGatePasses function
+        function loadOutgoingGatePasses() {
+            const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing');
+            const filter = 'incomplete'; // Simulate the default filter
+            
+            console.log('🔍 Loading outgoing gate passes:', {
+                totalGatePasses: allGatePasses.length,
+                outgoingPasses: outgoingPasses.length,
+                filter: filter
+            });
+            
+            let filteredPasses = outgoingPasses;
+            
+            if (filter === 'incomplete') {
+                filteredPasses = outgoingPasses.filter(gp => !isOutgoingDetailsComplete(gp));
+                console.log('📋 Incomplete filter results:', {
+                    totalOutgoing: outgoingPasses.length,
+                    incomplete: filteredPasses.length,
+                    incompletePasses: filteredPasses.map(gp => ({
+                        id: gp.id,
+                        item: gp.item,
+                        hasItemRate: !!gp.itemRate,
+                        hasBrokerName: !!gp.brokerName,
+                        hasPaymentDueDays: !!gp.paymentDueDays
+                    }))
+                });
+            }
+            
+            return filteredPasses;
+        }
+
+        // Override console.log to display in the page
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            const logsDiv = document.getElementById('consoleLogs');
+            const logEntry = document.createElement('div');
+            logEntry.textContent = args.join(' ');
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        };
+
+        // Create test data
+        function createTestData() {
+            allGatePasses = [
+                {
+                    id: 'AAF/25-26/0001',
+                    type: 'Outgoing',
+                    item: 'Maize',
+                    purchasedFrom: 'Test Buyer 1',
+                    truckNumber: 'TN01AB1234',
+                    date: '2025-01-15',
+                    ownWeight: 50,
+                    // Complete - has all required fields
+                    itemRate: 2500,
+                    brokerName: 'John Doe',
+                    paymentDueDays: 30
+                },
+                {
+                    id: 'AAF/25-26/0002',
+                    type: 'Outgoing',
+                    item: 'Wheat',
+                    purchasedFrom: 'Test Buyer 2',
+                    truckNumber: 'TN02CD5678',
+                    date: '2025-01-16',
+                    ownWeight: 75,
+                    // Incomplete - missing brokerName
+                    itemRate: 2800,
+                    brokerName: null,
+                    paymentDueDays: 15
+                },
+                {
+                    id: 'AAF/25-26/0003',
+                    type: 'Outgoing',
+                    item: 'Rice',
+                    purchasedFrom: 'Test Buyer 3',
+                    truckNumber: 'TN03EF9012',
+                    date: '2025-01-17',
+                    ownWeight: 60,
+                    // Incomplete - missing itemRate
+                    itemRate: null,
+                    brokerName: 'Jane Smith',
+                    paymentDueDays: 20
+                },
+                {
+                    id: 'AAF/25-26/0004',
+                    type: 'Outgoing',
+                    item: 'Maize',
+                    purchasedFrom: 'Test Buyer 4',
+                    truckNumber: 'TN04GH3456',
+                    date: '2025-01-18',
+                    ownWeight: 40,
+                    // Incomplete - missing paymentDueDays
+                    itemRate: 2600,
+                    brokerName: 'Bob Wilson',
+                    paymentDueDays: null
+                },
+                {
+                    id: 'AAF/25-26/0005',
+                    type: 'Outgoing',
+                    item: 'Wheat',
+                    purchasedFrom: 'Test Buyer 5',
+                    truckNumber: 'TN05IJ7890',
+                    date: '2025-01-19',
+                    ownWeight: 55,
+                    // Incomplete - missing all additional details
+                },
+                {
+                    id: 'AAF/25-26/0006',
+                    type: 'Incoming', // Should not appear in outgoing filter
+                    item: 'Maize',
+                    purchasedFrom: 'Test Supplier',
+                    truckNumber: 'TN06KL1234',
+                    date: '2025-01-20',
+                    ownWeight: 100,
+                    partyWeight: 95
+                }
+            ];
+            
+            document.getElementById('testDataStatus').innerHTML = `
+                <div class="text-green-600">✅ Created ${allGatePasses.length} test gate passes</div>
+                <div class="text-sm text-gray-600 mt-2">
+                    - 1 Complete outgoing gate pass<br>
+                    - 4 Incomplete outgoing gate passes<br>
+                    - 1 Incoming gate pass (should not appear in outgoing filter)
+                </div>
+            `;
+            
+            console.log('✅ Test data created:', allGatePasses.length, 'gate passes');
+        }
+
+        // Test the filter
+        function testFilter() {
+            const resultsDiv = document.getElementById('filterResults');
+            const incompletePasses = loadOutgoingGatePasses();
+            
+            resultsDiv.innerHTML = `
+                <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                    <h3 class="font-semibold text-yellow-800">Incomplete Gate Passes Found: ${incompletePasses.length}</h3>
+                    <div class="mt-2 space-y-2">
+                        ${incompletePasses.map(gp => `
+                            <div class="bg-white p-3 rounded border">
+                                <div class="font-medium">${gp.id} - ${gp.item}</div>
+                                <div class="text-sm text-gray-600">
+                                    Rate: ${gp.itemRate ? '✅' : '❌'} | 
+                                    Broker: ${gp.brokerName ? '✅' : '❌'} | 
+                                    Due Days: ${gp.paymentDueDays ? '✅' : '❌'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event listeners
+        document.getElementById('createTestData').addEventListener('click', createTestData);
+        document.getElementById('testFilter').addEventListener('click', testFilter);
+    </script>
+</body>
+</html>

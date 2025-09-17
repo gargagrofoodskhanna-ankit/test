@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Default Loading Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Reports Section Default Loading Test</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">New Reports Section Behavior</h2>
+            
+            <div class="space-y-4">
+                <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                    <h3 class="font-semibold text-green-800">✅ What's New:</h3>
+                    <ul class="list-disc list-inside text-green-700 mt-2 space-y-1">
+                        <li>Reports section now opens with "Incomplete Details" filter selected by default</li>
+                        <li>Automatically loads and displays incomplete outgoing gate passes</li>
+                        <li>Shows helpful status indicators and counts</li>
+                        <li>Provides clear messaging about what's being displayed</li>
+                    </ul>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <h3 class="font-semibold text-blue-800">📋 Default Behavior:</h3>
+                    <ul class="list-disc list-inside text-blue-700 mt-2 space-y-1">
+                        <li><strong>Filter:</strong> "Incomplete Details (Default)" is pre-selected</li>
+                        <li><strong>Display:</strong> Shows only outgoing gate passes missing details</li>
+                        <li><strong>Status:</strong> Dynamic count and status indicator</li>
+                        <li><strong>Message:</strong> Clear explanation of what the user is seeing</li>
+                    </ul>
+                </div>
+
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <h3 class="font-semibold text-yellow-800">🎯 User Benefits:</h3>
+                    <ul class="list-disc list-inside text-yellow-700 mt-2 space-y-1">
+                        <li>Immediate focus on gate passes that need attention</li>
+                        <li>No need to manually select the filter each time</li>
+                        <li>Clear visual feedback about the current state</li>
+                        <li>Better workflow for completing gate pass details</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">How to Test</h2>
+            <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                <li>Open the main application (index.html)</li>
+                <li>Login with any user credentials</li>
+                <li>Click on the "Reports" button</li>
+                <li>Notice that the filter is set to "Incomplete Details (Default)"</li>
+                <li>See the status indicator showing incomplete gate passes</li>
+                <li>Try changing the filter to see different views</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

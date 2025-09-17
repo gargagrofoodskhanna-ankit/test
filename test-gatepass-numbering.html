@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Pass Numbering Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Gate Pass Numbering Test</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Test Gate Pass Number Generation</h2>
+            <button id="testBtn" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                Generate Test Gate Pass Numbers
+            </button>
+            <div id="results" class="mt-4 space-y-2"></div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Expected Format</h2>
+            <div class="text-sm text-gray-600 space-y-1">
+                <p><strong>Format:</strong> AAF/25-26/XXXX</p>
+                <p><strong>Where:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>AAF = Company/Organization prefix</li>
+                    <li>25-26 = Financial year (2025-2026)</li>
+                    <li>XXXX = Auto-incrementing number starting from 0001</li>
+                </ul>
+                <p class="mt-4"><strong>Examples:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1 font-mono">
+                    <li>AAF/25-26/0001</li>
+                    <li>AAF/25-26/0002</li>
+                    <li>AAF/25-26/0003</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the gate pass number generation logic
+        function generateTestGatePassNumber(counter) {
+            const currentYear = new Date().getFullYear();
+            const yearSuffix = currentYear.toString().slice(-2);
+            const nextYearSuffix = (currentYear + 1).toString().slice(-2);
+            const yearRange = `${yearSuffix}-${nextYearSuffix}`;
+            
+            return `AAF/${yearRange}/${counter.toString().padStart(4, '0')}`;
+        }
+
+        document.getElementById('testBtn').addEventListener('click', function() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            // Generate 5 test numbers
+            for (let i = 1; i <= 5; i++) {
+                const gatePassNumber = generateTestGatePassNumber(i);
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'p-3 bg-gray-50 rounded border-l-4 border-blue-500';
+                resultDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-mono text-lg font-bold text-blue-600">${gatePassNumber}</span>
+                        <span class="text-sm text-gray-500">Test #${i}</span>
+                    </div>
+                `;
+                resultsDiv.appendChild(resultDiv);
+            }
+        });
+    </script>
+</body>
+</html>

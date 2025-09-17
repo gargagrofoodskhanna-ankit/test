@@ -266,12 +266,20 @@
                     
                     <!-- Filter for outgoing gate passes -->
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter Outgoing Gate Passes</label>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Filter Outgoing Gate Passes</label>
+                            <button id="refreshReportsBtn" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                🔄 Refresh
+                            </button>
+                        </div>
                         <select id="outgoingFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="all">All Outgoing Gate Passes</option>
-                            <option value="incomplete">Incomplete Details</option>
+                            <option value="incomplete" selected>Incomplete Details</option>
                             <option value="complete">Complete Details</option>
                         </select>
+                        <div id="filterStatus" class="mt-2 text-sm text-gray-600">
+                            <!-- Status will be updated dynamically -->
+                        </div>
                     </div>
                     
                     <!-- List of outgoing gate passes with edit capability -->
@@ -294,6 +302,7 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gate Pass No.</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Party/Supplier</th>
@@ -706,7 +715,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setDoc, setLogLevel, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setDoc, getDoc, setLogLevel, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         console.log("✅ Firebase SDKs loaded successfully");
 
@@ -737,6 +746,7 @@
         let userId;
         let userAuthReady = false;
         let allGatePasses = [];
+        window.allGatePasses = allGatePasses;
         let currentUser = null;
         let userRole = null;
 
@@ -1027,6 +1037,48 @@
             return db && auth && userAuthReady;
         }
         
+        // Generate auto-incrementing gate pass number
+        async function generateGatePassNumber() {
+            try {
+                // Get current year for the format (25-26 for 2025-2026)
+                const currentYear = new Date().getFullYear();
+                const yearSuffix = currentYear.toString().slice(-2);
+                const nextYearSuffix = (currentYear + 1).toString().slice(-2);
+                const yearRange = `${yearSuffix}-${nextYearSuffix}`;
+                
+                // Reference to the counter document
+                const counterRef = doc(db, 'counters', 'gatepass_counter');
+                
+                // Use Firebase transaction to atomically increment the counter
+                const counterDoc = await getDoc(counterRef);
+                
+                let nextNumber = 1;
+                if (counterDoc.exists()) {
+                    const counterData = counterDoc.data();
+                    nextNumber = (counterData.count || 0) + 1;
+                }
+                
+                // Update the counter
+                await setDoc(counterRef, { 
+                    count: nextNumber,
+                    lastUpdated: new Date().toISOString()
+                }, { merge: true });
+                
+                // Format the gate pass number: AAF/25-26/0001
+                const formattedNumber = `AAF/${yearRange}/${nextNumber.toString().padStart(4, '0')}`;
+                
+                console.log(`✅ Generated gate pass number: ${formattedNumber}`);
+                return formattedNumber;
+                
+            } catch (error) {
+                console.error("❌ Error generating gate pass number:", error);
+                // Fallback to timestamp-based ID if counter fails
+                const fallbackId = `AAF/25-26/${Date.now().toString().slice(-4)}`;
+                console.log(`⚠️ Using fallback ID: ${fallbackId}`);
+                return fallbackId;
+            }
+        }
+
         // Enhanced data validation for cloud-only mode
         function validateGatePassData(formData) {
             const errors = [];
@@ -1656,6 +1708,7 @@
                 gatePassDetails.className = "flex-1";
                 gatePassDetails.innerHTML = `
                     <p class="font-bold text-gray-900">${gatePass.item}</p>
+                    <p class="text-sm text-gray-600 font-mono">Gate Pass: <span class="font-bold text-blue-600">${gatePass.gatePassNumber || gatePass.id}</span></p>
                     <p class="text-sm text-gray-700">Type: <span class="font-medium">${gatePass.type}</span></p>
                     <p class="text-sm text-gray-700">Purchased From: <span class="font-medium">${gatePass.purchasedFrom}</span></p>
                     <p class="text-sm text-gray-700">Truck: <span class="font-medium">${gatePass.truckNumber}</span></p>
@@ -1738,7 +1791,7 @@
             if (gatePasses.length === 0) {
                 gatePassTableBody.innerHTML = `
                     <tr>
-                        <td colspan="11" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="12" class="px-6 py-8 text-center text-gray-500">
                             No gate passes found. Add some gate passes to see the report.
                         </td>
                     </tr>
@@ -1762,6 +1815,9 @@
                     'Anonymous User';
 
                 row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-blue-600">
+                        ${gatePass.gatePassNumber || gatePass.id}
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs font-semibold rounded-full ${gatePass.type === 'Incoming' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                             ${gatePass.type}
@@ -2207,8 +2263,12 @@
                 return;
             }
 
+            // Generate auto-incrementing gate pass number
+            const gatePassNumber = await generateGatePassNumber();
+            
             const gatePassData = {
-                id: Date.now().toString(),
+                id: gatePassNumber, // Use the formatted gate pass number
+                gatePassNumber: gatePassNumber, // Store the formatted number separately
                 type,
                 item,
                 purchasedFrom,
@@ -2562,9 +2622,19 @@
                 reportsView.classList.remove('hidden');
                 reportsViewBtn.classList.add('bg-blue-600', 'text-white');
                 reportsViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
+                
+                // Set default filter to incomplete gate passes
+                const outgoingFilter = document.getElementById('outgoingFilter');
+                outgoingFilter.value = 'incomplete';
+                
                 // Refresh reports data when switching to reports view
                 renderGatePassTable(allGatePasses);
-                loadOutgoingGatePasses();
+                
+                // Add a small delay to ensure data is loaded, then load outgoing gate passes
+                setTimeout(() => {
+                    console.log('🔄 Loading reports with delay, allGatePasses count:', allGatePasses.length);
+                    loadOutgoingGatePasses();
+                }, 100);
             } else if (view === 'admin') {
                 adminView.classList.remove('hidden');
                 adminViewBtn.classList.add('bg-blue-600', 'text-white');
@@ -2840,22 +2910,72 @@
             });
 
             // Outgoing Details Management Functions
-            function loadOutgoingGatePasses() {
+            window.loadOutgoingGatePasses = function() {
+                // If no gate passes loaded, try to load them first
+                if (allGatePasses.length === 0) {
+                    console.log('⚠️ No gate passes loaded, attempting to load data...');
+                    // Try to trigger data loading
+                    if (typeof startRealtimeListeners === 'function') {
+                        startRealtimeListeners();
+                    }
+                    // Wait a bit and try again
+                    setTimeout(() => {
+                        loadOutgoingGatePasses();
+                    }, 500);
+                    return;
+                }
+                
                 const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing');
                 const container = document.getElementById('outgoingGatePassList');
                 const filter = document.getElementById('outgoingFilter').value;
+                const filterStatus = document.getElementById('filterStatus');
+                
+                console.log('🔍 Loading outgoing gate passes:', {
+                    totalGatePasses: allGatePasses.length,
+                    outgoingPasses: outgoingPasses.length,
+                    filter: filter
+                });
                 
                 let filteredPasses = outgoingPasses;
+                let statusText = '';
+                let statusClass = '';
+                
                 if (filter === 'incomplete') {
                     filteredPasses = outgoingPasses.filter(gp => !isOutgoingDetailsComplete(gp));
+                    console.log('📋 Incomplete filter results:', {
+                        totalOutgoing: outgoingPasses.length,
+                        incomplete: filteredPasses.length,
+                        incompletePasses: filteredPasses.map(gp => ({
+                            id: gp.id,
+                            item: gp.item,
+                            hasItemRate: !!gp.itemRate,
+                            hasBrokerName: !!gp.brokerName,
+                            hasPaymentDueDays: !!gp.paymentDueDays
+                        }))
+                    });
+                    statusText = `📋 Showing ${filteredPasses.length} incomplete gate passes`;
+                    statusClass = 'bg-yellow-100 text-yellow-800';
                 } else if (filter === 'complete') {
                     filteredPasses = outgoingPasses.filter(gp => isOutgoingDetailsComplete(gp));
+                    statusText = `✅ Showing ${filteredPasses.length} complete gate passes`;
+                    statusClass = 'bg-green-100 text-green-800';
+                } else {
+                    statusText = `📊 Showing all ${filteredPasses.length} outgoing gate passes`;
+                    statusClass = 'bg-blue-100 text-blue-800';
                 }
+                
+                // Update filter status
+                filterStatus.innerHTML = `<span class="px-2 py-1 ${statusClass} rounded-full text-xs font-medium">${statusText}</span>`;
                 
                 container.innerHTML = '';
                 
                 if (filteredPasses.length === 0) {
-                    container.innerHTML = '<p class="text-gray-500 text-center py-4">No outgoing gate passes found.</p>';
+                    const noResultsMessage = filter === 'incomplete' ? 
+                        '🎉 Great! All outgoing gate passes have complete details.' :
+                        filter === 'complete' ? 
+                        'No complete gate passes found. Add details to outgoing gate passes.' :
+                        'No outgoing gate passes found.';
+                    container.innerHTML = `<p class="text-gray-500 text-center py-4">${noResultsMessage}</p>`;
                     return;
                 }
                 
@@ -2892,13 +3012,13 @@
                     
                     container.appendChild(listItem);
                 });
-            }
+            };
 
             // Make isOutgoingDetailsComplete globally accessible
             window.isOutgoingDetailsComplete = function(gatePass) {
-                return gatePass && gatePass.itemRate && 
+                return gatePass && 
+                       gatePass.itemRate && 
                        gatePass.brokerName && 
-                       gatePass.outgoingPartyWeight && 
                        gatePass.paymentDueDays;
             }
 
@@ -3018,6 +3138,10 @@
 
             // Event listeners for outgoing details
             document.getElementById('outgoingFilter').addEventListener('change', loadOutgoingGatePasses);
+            document.getElementById('refreshReportsBtn').addEventListener('click', () => {
+                console.log('🔄 Manual refresh triggered');
+                loadOutgoingGatePasses();
+            });
             document.getElementById('outgoingDetailsForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 window.saveOutgoingDetails();
