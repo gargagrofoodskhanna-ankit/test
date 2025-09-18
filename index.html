@@ -1332,6 +1332,19 @@
             }, 5000);
         }
 
+        // Safe date formatter to handle invalid dates
+        const formatDate = (date) => {
+            if (!date || isNaN(new Date(date).getTime())) {
+                return 'N/A';
+            }
+            return new Date(date).toLocaleDateString();
+        };
+
+        // Safe display function for potentially undefined values
+        const safeDisplay = (value, fallback = 'N/A') => {
+            return value && value !== 'N/A' && value !== 'undefined' ? value : fallback;
+        };
+
         function hideNotification() {
             notification.classList.add('hidden');
         }
@@ -3683,8 +3696,8 @@
                     
                     // Refresh displays
                     loadOutgoingGatePasses();
-                    renderGatePassList();
-                    renderGatePassTable();
+                    renderGatePasses(allGatePasses);
+                    renderGatePassTable(allGatePasses);
                     
                     // Close modal
                     document.getElementById('outgoingDetailsModal').style.display = 'none';
@@ -3752,11 +3765,11 @@
                     ...filteredEnhancedPayments.map(p => [
                         p.gatePassId,
                         p.brokerName,
-                        p.grainType,
+                        safeDisplay(p.grainType, 'Not Specified'),
                         p.amountPaid,
                         p.totalAmount,
                         p.status,
-                        p.dueDate.toLocaleDateString()
+                        formatDate(p.dueDate)
                     ])
                 ].map(row => row.join(',')).join('\n');
 
@@ -3792,7 +3805,7 @@
                     if (brokerFilter !== 'all' && payment.brokerName !== brokerFilter) return false;
 
                     // Due date filter
-                    if (dueDateFilter && payment.dueDate.toISOString().split('T')[0] !== dueDateFilter) return false;
+                    if (dueDateFilter && payment.dueDate && !isNaN(payment.dueDate.getTime()) && payment.dueDate.toISOString().split('T')[0] !== dueDateFilter) return false;
 
                     // Amount range filter
                     if (amountRangeFilter !== 'all') {
@@ -3852,9 +3865,9 @@
                         <tr class="hover:bg-gray-50 transition-colors duration-200">
                             <td class="px-8 py-4 text-gray-900 font-medium whitespace-nowrap">${payment.gatePassId}</td>
                             <td class="px-8 py-4 text-gray-700 whitespace-nowrap">${payment.brokerName}</td>
-                            <td class="px-8 py-4 text-gray-700 whitespace-nowrap">${payment.grainType}</td>
+                            <td class="px-8 py-4 text-gray-700 whitespace-nowrap">${safeDisplay(payment.grainType, 'Not Specified')}</td>
                             <td class="px-8 py-4 text-gray-700 whitespace-nowrap">₹${payment.amountPaid.toLocaleString()} / ₹${payment.totalAmount.toLocaleString()}</td>
-                            <td class="px-8 py-4 text-gray-500 whitespace-nowrap">${payment.dueDate.toLocaleDateString()}</td>
+                            <td class="px-8 py-4 text-gray-500 whitespace-nowrap">${formatDate(payment.dueDate)}</td>
                             <td class="px-8 py-4 whitespace-nowrap">
                                 <span class="px-3 py-1 inline-flex text-xs font-semibold leading-5 rounded-full ${statusClass}">
                                     ${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
@@ -3943,8 +3956,19 @@
                         const paymentHistory = gatePass.paymentHistory || [];
                         const totalReceived = paymentHistory.reduce((sum, p) => sum + (p.amount || 0), 0);
                         
-                        // Calculate due date (30 days from outgoing date)
-                        const dueDate = new Date(gatePass.outgoingDate);
+                        // Calculate due date (30 days from gate pass date)
+                        console.log('🔍 DEBUG: Date calculation for gate pass:', {
+                            id: gatePass.id,
+                            originalDate: gatePass.date,
+                            dateObject: new Date(gatePass.date),
+                            isValidDate: !isNaN(new Date(gatePass.date).getTime())
+                        });
+                        
+                        const dueDate = new Date(gatePass.date);
+                        if (isNaN(dueDate.getTime())) {
+                            console.error('❌ Invalid date for gate pass:', gatePass.id, 'Date:', gatePass.date);
+                            return; // Skip this gate pass if date is invalid
+                        }
                         dueDate.setDate(dueDate.getDate() + 30);
                         
                         const today = new Date();
@@ -3959,11 +3983,19 @@
                             status = 'overdue';
                         }
 
+                        // Debug logging for grain type
+                        console.log('🔍 DEBUG: Gate pass item data:', {
+                            id: gatePass.id,
+                            item: gatePass.item,
+                            itemName: gatePass.itemName,
+                            brokerName: gatePass.brokerName
+                        });
+
                         const paymentData = {
                             id: gatePass.id,
                             gatePassId: gatePass.id,
                             brokerName: gatePass.brokerName || 'N/A',
-                            grainType: gatePass.itemName || 'N/A',
+                            grainType: gatePass.item || 'Not Specified',
                             amountPaid: totalReceived,
                             totalAmount: totalAmount,
                             dueDate: dueDate,
@@ -4239,8 +4271,17 @@
                     // Update payment history
                     allGatePasses[gatePassIndex].paymentHistory = [...currentHistory, newPayment];
                     
+                    // Calculate payment status
+                    let paymentStatus = 'pending';
+                    if (newTotal >= totalAmount) {
+                        paymentStatus = 'received';
+                    } else if (newTotal > 0) {
+                        paymentStatus = 'partial';
+                    }
+                    
                     // Update calculated fields
                     allGatePasses[gatePassIndex].amountReceived = newTotal;
+                    allGatePasses[gatePassIndex].paymentStatus = paymentStatus;
                     allGatePasses[gatePassIndex].lastUpdatedBy = currentUser.name;
                     allGatePasses[gatePassIndex].lastUpdatedAt = new Date().toISOString();
                     
@@ -4262,13 +4303,16 @@
                 try {
                     if (gatePass.firebaseId && db) {
                         const gatePassRef = doc(db, 'gate_passes', gatePass.firebaseId);
-                        await updateDoc(gatePassRef, {
-                            paymentStatus: gatePass.paymentStatus,
-                            amountReceived: gatePass.amountReceived,
-                            paymentHistory: gatePass.paymentHistory,
-                            lastUpdatedBy: gatePass.lastUpdatedBy,
-                            lastUpdatedAt: gatePass.lastUpdatedAt
-                        });
+                        
+                        // Prepare update data, filtering out undefined values
+                        const updateData = {};
+                        if (gatePass.paymentStatus !== undefined) updateData.paymentStatus = gatePass.paymentStatus;
+                        if (gatePass.amountReceived !== undefined) updateData.amountReceived = gatePass.amountReceived;
+                        if (gatePass.paymentHistory !== undefined) updateData.paymentHistory = gatePass.paymentHistory;
+                        if (gatePass.lastUpdatedBy !== undefined) updateData.lastUpdatedBy = gatePass.lastUpdatedBy;
+                        if (gatePass.lastUpdatedAt !== undefined) updateData.lastUpdatedAt = gatePass.lastUpdatedAt;
+                        
+                        await updateDoc(gatePassRef, updateData);
                         console.log('✅ Payment status updated in Firebase');
                     }
                 } catch (error) {

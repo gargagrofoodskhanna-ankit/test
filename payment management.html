@@ -327,6 +327,19 @@
             }, 3000);
         };
 
+        // Safe date formatter to handle invalid dates
+        const formatDate = (date) => {
+            if (!date || isNaN(new Date(date).getTime())) {
+                return 'N/A';
+            }
+            return new Date(date).toLocaleDateString();
+        };
+
+        // Safe display function for potentially undefined values
+        const safeDisplay = (value, fallback = 'N/A') => {
+            return value && value !== 'N/A' && value !== 'undefined' ? value : fallback;
+        };
+
         const setupAuth = async () => {
             try {
                 // Check if Firebase config is properly set
@@ -381,23 +394,43 @@
         };
 
         const loadFromLocalStorage = () => {
+            console.log('🔍 DEBUG: Loading from localStorage');
             const storedPayments = localStorage.getItem('grain-payments');
             if (storedPayments) {
+                console.log('🔍 DEBUG: Found stored payments in localStorage');
                 allPayments = JSON.parse(storedPayments);
+                console.log('🔍 DEBUG: Parsed payments:', allPayments);
+                
+                // Convert date strings back to Date objects
+                allPayments = allPayments.map(payment => {
+                    console.log('🔍 DEBUG: Processing payment:', payment);
+                    return {
+                        ...payment,
+                        dueDate: new Date(payment.dueDate),
+                        timestamp: new Date(payment.timestamp)
+                    };
+                });
+                console.log('🔍 DEBUG: After date conversion:', allPayments);
             } else if (ENABLE_SAMPLE_DATA) {
+                console.log('🔍 DEBUG: No stored data, loading sample data');
                 // Load sample data for testing
                 allPayments = getSampleData();
+                console.log('🔍 DEBUG: Sample data loaded:', allPayments);
                 saveToLocalStorage();
             } else {
+                console.log('🔍 DEBUG: No data to load');
                 allPayments = [];
             }
 
             if (allPayments.length > 0) {
+                console.log('🔍 DEBUG: Filtering and rendering payments');
                 filteredPayments = applyFilters(allPayments);
+                console.log('🔍 DEBUG: Filtered payments:', filteredPayments);
                 renderPaymentsTable(filteredPayments);
                 updateSummaryCards();
                 updateBrokerFilter();
             } else {
+                console.log('🔍 DEBUG: No payments to display');
                 noDataMessage.classList.remove('hidden');
             }
         };
@@ -546,7 +579,7 @@
                         id: docId,
                         gatePassId: data.gatePassId || 'N/A',
                         brokerName: data.brokerName || data.customerName || 'N/A',
-                        grainType: data.grainType || 'N/A',
+                        grainType: data.grainType || 'Not Specified',
                         amountPaid: data.amountPaid,
                         totalAmount: data.totalAmount,
                         balanceDue: balanceDue,
@@ -581,24 +614,43 @@
         const renderPaymentsTable = (payments) => {
             paymentsTableBody.innerHTML = '';
             
-            payments.forEach(payment => {
+            // Debug logging
+            console.log('🔍 DEBUG: Rendering payments table');
+            console.log('🔍 DEBUG: Number of payments:', payments.length);
+            if (payments.length > 0) {
+                console.log('🔍 DEBUG: First payment data:', payments[0]);
+                console.log('🔍 DEBUG: First payment grainType:', payments[0].grainType);
+                console.log('🔍 DEBUG: safeDisplay result:', safeDisplay(payments[0].grainType, 'Not Specified'));
+            }
+            
+            payments.forEach((payment, index) => {
                 const progressPercentage = Math.round((payment.amountPaid / payment.totalAmount) * 100);
                 const statusClass = payment.status === 'fully paid' ? 'bg-green-100 text-green-800' : 
                                   payment.status === 'overdue' ? 'bg-red-100 text-red-800' : 
                                   'bg-yellow-100 text-yellow-800';
                 
+                // Debug each payment
+                if (index < 3) { // Only log first 3 payments to avoid spam
+                    console.log(`🔍 DEBUG: Payment ${index + 1}:`, {
+                        id: payment.id,
+                        grainType: payment.grainType,
+                        safeDisplayResult: safeDisplay(payment.grainType, 'Not Specified'),
+                        brokerName: payment.brokerName
+                    });
+                }
+                
                 const row = `
                     <tr class="hover:bg-gray-50 transition-colors duration-200">
-                        <td class="px-6 py-4 text-gray-900 font-medium whitespace-nowrap">${payment.gatePassId}</td>
-                        <td class="px-6 py-4 text-gray-700 whitespace-nowrap">${payment.brokerName}</td>
-                        <td class="px-6 py-4 text-gray-700 whitespace-nowrap">${payment.grainType}</td>
+                        <td class="px-6 py-4 text-gray-900 font-medium whitespace-nowrap">${safeDisplay(payment.gatePassId)}</td>
+                        <td class="px-6 py-4 text-gray-700 whitespace-nowrap">${safeDisplay(payment.brokerName)}</td>
+                        <td class="px-6 py-4 text-gray-700 whitespace-nowrap">${safeDisplay(payment.grainType, 'Not Specified')}</td>
                         <td class="px-6 py-4 text-gray-700 whitespace-nowrap">₹${payment.amountPaid.toLocaleString()} / ₹${payment.totalAmount.toLocaleString()}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 inline-flex text-xs font-semibold leading-5 rounded-full ${statusClass}">
                                 ${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-gray-500 whitespace-nowrap">${payment.dueDate.toLocaleDateString()}</td>
+                        <td class="px-6 py-4 text-gray-500 whitespace-nowrap">${formatDate(payment.dueDate)}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
@@ -693,8 +745,29 @@
             const totalAmount = parseFloat(document.getElementById('total-amount').value);
             const dueDate = document.getElementById('due-date').value;
             
+            // Validation checks
+            if (!gatePassId.trim()) {
+                showMessage("Please enter a Gate Pass ID.", 'error');
+                return;
+            }
+            
+            if (!brokerName.trim()) {
+                showMessage("Please enter a Broker/Party name.", 'error');
+                return;
+            }
+            
+            if (!grainType || grainType === '') {
+                showMessage("Please select a grain type.", 'error');
+                return;
+            }
+            
             if (amountPaid <= 0 || isNaN(amountPaid) || totalAmount <= 0 || isNaN(totalAmount)) {
                 showMessage("Please enter valid amounts.", 'error');
+                return;
+            }
+            
+            if (!dueDate || isNaN(new Date(dueDate).getTime())) {
+                showMessage("Please enter a valid due date.", 'error');
                 return;
             }
 
@@ -801,13 +874,13 @@
             const csvContent = [
                 ['Gate Pass ID', 'Broker/Party', 'Grain Type', 'Amount Paid', 'Total Amount', 'Status', 'Due Date'],
                 ...filteredPayments.map(p => [
-                    p.gatePassId,
-                    p.brokerName,
-                    p.grainType,
+                    safeDisplay(p.gatePassId),
+                    safeDisplay(p.brokerName),
+                    safeDisplay(p.grainType, 'Not Specified'),
                     p.amountPaid,
                     p.totalAmount,
                     p.status,
-                    p.dueDate.toLocaleDateString()
+                    formatDate(p.dueDate)
                 ])
             ].map(row => row.join(',')).join('\n');
 
@@ -884,9 +957,9 @@
         configBtn.addEventListener('click', openConfig);
         configCancel.addEventListener('click', closeConfig);
         configSave.addEventListener('click', saveConfig);
+        clearFilters.addEventListener('click', clearAllFilters);
         closeModalBtn.addEventListener('click', closeModal);
         paymentForm.addEventListener('submit', addTransaction);
-        clearFilters.addEventListener('click', clearAllFilters);
 
         // Filter event listeners
         statusFilter.addEventListener('change', () => {
