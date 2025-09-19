@@ -244,15 +244,30 @@
             <div id="reportsView" class="hidden">
                 <h2 class="text-2xl font-bold text-center mb-4 text-gray-800">Gate Pass Reports</h2>
                 
-                <!-- Outgoing Gate Pass Details Section -->
+                <!-- Gate Pass Type Selection -->
                 <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Select Gate Pass Type</h3>
+                    <div class="flex justify-center">
+                        <div class="bg-gray-100 p-1 rounded-lg">
+                            <button id="outgoingReportsTab" class="px-6 py-2 rounded-md font-medium text-sm transition-colors bg-blue-600 text-white">
+                                Outgoing Gate Passes
+                            </button>
+                            <button id="incomingReportsTab" class="px-6 py-2 rounded-md font-medium text-sm transition-colors text-gray-600 hover:text-gray-800">
+                                Incoming Gate Passes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Outgoing Gate Pass Details Section -->
+                <div id="outgoingReportsContent" class="bg-white p-6 rounded-lg shadow-sm mb-6">
                     <h3 class="text-lg font-semibold mb-4">Outgoing Gate Pass Details Management</h3>
                     
                     <!-- Filter for outgoing gate passes -->
                     <div class="mb-4">
                         <div class="flex justify-between items-center mb-2">
                             <label class="block text-sm font-medium text-gray-700">Filter Outgoing Gate Passes</label>
-                            <button id="refreshReportsBtn" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                            <button id="refreshOutgoingReportsBtn" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
                                 🔄 Refresh
                             </button>
                         </div>
@@ -261,13 +276,41 @@
                             <option value="incomplete" selected>Incomplete Details</option>
                             <option value="complete">Complete Details</option>
                         </select>
-                        <div id="filterStatus" class="mt-2 text-sm text-gray-600">
+                        <div id="outgoingFilterStatus" class="mt-2 text-sm text-gray-600">
                             <!-- Status will be updated dynamically -->
                         </div>
                     </div>
                     
                     <!-- List of outgoing gate passes with edit capability -->
                     <div id="outgoingGatePassList" class="space-y-4">
+                        <!-- Dynamic list items will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Incoming Gate Pass Details Section -->
+                <div id="incomingReportsContent" class="bg-white p-6 rounded-lg shadow-sm mb-6 hidden">
+                    <h3 class="text-lg font-semibold mb-4">Incoming Gate Pass Details Management</h3>
+                    
+                    <!-- Filter for incoming gate passes -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Filter Incoming Gate Passes</label>
+                            <button id="refreshIncomingReportsBtn" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <select id="incomingFilter" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Incoming Gate Passes</option>
+                            <option value="incomplete" selected>Incomplete Details</option>
+                            <option value="complete">Complete Details</option>
+                        </select>
+                        <div id="incomingFilterStatus" class="mt-2 text-sm text-gray-600">
+                            <!-- Status will be updated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- List of incoming gate passes with edit capability -->
+                    <div id="incomingGatePassList" class="space-y-4">
                         <!-- Dynamic list items will be populated here -->
                     </div>
                 </div>
@@ -702,6 +745,80 @@
                 
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" id="cancelOutgoingDetails" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Save Details
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Incoming Details Modal -->
+    <div id="incomingDetailsModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Edit Incoming Gate Pass Details</h2>
+            <form id="incomingDetailsForm">
+                <!-- Basic info (read-only) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Gate Pass ID</label>
+                        <input type="text" id="incomingGatePassId" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Item</label>
+                        <input type="text" id="incomingItem" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Purchased From</label>
+                        <input type="text" id="incomingPurchasedFrom" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Truck Number</label>
+                        <input type="text" id="incomingTruckNumber" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Party Weight (quintal)</label>
+                        <input type="text" id="incomingPartyWeight" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Own Weight (quintal)</label>
+                        <input type="text" id="incomingOwnWeight" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Date</label>
+                        <input type="text" id="incomingDate" readonly class="mt-1 block w-full p-3 rounded-lg border border-gray-300 bg-gray-100">
+                    </div>
+                </div>
+                
+                <!-- Additional incoming fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="incomingItemRate" class="block text-sm font-medium text-gray-700">Rate per Quintal (₹)</label>
+                        <input type="number" id="incomingItemRate" step="0.01" min="0" required
+                               class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="incomingBrokerName" class="block text-sm font-medium text-gray-700">Broker Name</label>
+                        <input type="text" id="incomingBrokerName" required
+                               class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="incomingPaymentDueDays" class="block text-sm font-medium text-gray-700">Payment Due (Days)</label>
+                        <input type="number" id="incomingPaymentDueDays" placeholder="Enter days" min="1" max="365" required
+                               class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Number of days from gate pass date</p>
+                    </div>
+                    <div>
+                        <label for="incomingRemarks" class="block text-sm font-medium text-gray-700">Additional Remarks</label>
+                        <textarea id="incomingRemarks" rows="3" placeholder="Enter any additional remarks..."
+                                  class="mt-1 block w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancelIncomingDetails" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
                         Cancel
                     </button>
                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
@@ -1871,7 +1988,11 @@
                             (isOutgoingDetailsComplete(gatePass) ? 
                                 '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Complete</span>' : 
                                 '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Incomplete</span>') : 
-                            '<span class="text-gray-400">-</span>'}
+                            gatePass.type === 'Incoming' ?
+                                (isIncomingDetailsComplete(gatePass) ? 
+                                    '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Complete</span>' : 
+                                    '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Incomplete</span>') :
+                                '<span class="text-gray-400">-</span>'}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ${userDisplay}
@@ -2654,9 +2775,8 @@
                 reportsViewBtn.classList.add('bg-blue-600', 'text-white');
                 reportsViewBtn.classList.remove('bg-gray-200', 'text-gray-800');
                 
-                // Set default filter to incomplete gate passes
-                const outgoingFilter = document.getElementById('outgoingFilter');
-                outgoingFilter.value = 'incomplete';
+                // Set default to outgoing tab
+                switchReportsTab('outgoing');
                 
                 // Refresh reports data when switching to reports view
                 renderGatePassTable(allGatePasses);
@@ -3479,6 +3599,239 @@
                 toggleEditPartyWeightField();
             });
 
+            // Reports Tab Switching Functions
+            window.switchReportsTab = function(tab) {
+                const outgoingTab = document.getElementById('outgoingReportsTab');
+                const incomingTab = document.getElementById('incomingReportsTab');
+                const outgoingContent = document.getElementById('outgoingReportsContent');
+                const incomingContent = document.getElementById('incomingReportsContent');
+                
+                if (tab === 'outgoing') {
+                    // Update tab buttons
+                    outgoingTab.classList.add('bg-blue-600', 'text-white');
+                    outgoingTab.classList.remove('text-gray-600', 'hover:text-gray-800');
+                    incomingTab.classList.remove('bg-blue-600', 'text-white');
+                    incomingTab.classList.add('text-gray-600', 'hover:text-gray-800');
+                    
+                    // Show/hide content
+                    outgoingContent.classList.remove('hidden');
+                    incomingContent.classList.add('hidden');
+                    
+                    // Load outgoing data
+                    loadOutgoingGatePasses();
+                } else if (tab === 'incoming') {
+                    // Update tab buttons
+                    incomingTab.classList.add('bg-blue-600', 'text-white');
+                    incomingTab.classList.remove('text-gray-600', 'hover:text-gray-800');
+                    outgoingTab.classList.remove('bg-blue-600', 'text-white');
+                    outgoingTab.classList.add('text-gray-600', 'hover:text-gray-800');
+                    
+                    // Show/hide content
+                    incomingContent.classList.remove('hidden');
+                    outgoingContent.classList.add('hidden');
+                    
+                    // Load incoming data
+                    loadIncomingGatePasses();
+                }
+            };
+
+            // Incoming Details Management Functions
+            window.loadIncomingGatePasses = function() {
+                // If no gate passes loaded, try to load them first
+                if (allGatePasses.length === 0) {
+                    console.log('⚠️ No gate passes loaded, attempting to load data...');
+                    // Try to trigger data loading
+                    if (typeof startRealtimeListeners === 'function') {
+                        startRealtimeListeners();
+                    }
+                    // Wait a bit and try again
+                    setTimeout(() => {
+                        loadIncomingGatePasses();
+                    }, 500);
+                    return;
+                }
+                
+                const incomingPasses = allGatePasses.filter(gp => gp.type === 'Incoming');
+                const container = document.getElementById('incomingGatePassList');
+                const filter = document.getElementById('incomingFilter').value;
+                const filterStatus = document.getElementById('incomingFilterStatus');
+                
+                console.log('🔍 Loading incoming gate passes:', {
+                    totalGatePasses: allGatePasses.length,
+                    incomingPasses: incomingPasses.length,
+                    filter: filter
+                });
+                
+                let filteredPasses = incomingPasses;
+                let statusText = '';
+                let statusClass = '';
+                
+                if (filter === 'incomplete') {
+                    filteredPasses = incomingPasses.filter(gp => !isIncomingDetailsComplete(gp));
+                    console.log('📋 Incomplete incoming filter results:', {
+                        totalIncoming: incomingPasses.length,
+                        incomplete: filteredPasses.length,
+                        incompletePasses: filteredPasses.map(gp => ({
+                            id: gp.id,
+                            item: gp.item,
+                            hasItemRate: !!gp.itemRate,
+                            hasBrokerName: !!gp.brokerName,
+                            hasPaymentDueDays: !!gp.paymentDueDays
+                        }))
+                    });
+                    statusText = `📋 Showing ${filteredPasses.length} incomplete incoming gate passes`;
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                } else if (filter === 'complete') {
+                    filteredPasses = incomingPasses.filter(gp => isIncomingDetailsComplete(gp));
+                    statusText = `✅ Showing ${filteredPasses.length} complete incoming gate passes`;
+                    statusClass = 'bg-green-100 text-green-800';
+                } else {
+                    statusText = `📊 Showing all ${filteredPasses.length} incoming gate passes`;
+                    statusClass = 'bg-blue-100 text-blue-800';
+                }
+                
+                // Update filter status
+                filterStatus.innerHTML = `<span class="px-2 py-1 ${statusClass} rounded-full text-xs font-medium">${statusText}</span>`;
+                
+                container.innerHTML = '';
+                
+                if (filteredPasses.length === 0) {
+                    const noResultsMessage = filter === 'incomplete' ? 
+                        '🎉 All incoming gate passes have complete details!' : 
+                        'No incoming gate passes found.';
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="text-4xl mb-2">📋</div>
+                            <p class="text-lg">${noResultsMessage}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Render incoming gate passes
+                filteredPasses.forEach(gatePass => {
+                    const isComplete = isIncomingDetailsComplete(gatePass);
+                    const statusBadge = isComplete ? 
+                        '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Complete</span>' :
+                        '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Incomplete</span>';
+                    
+                    const gatePassCard = document.createElement('div');
+                    gatePassCard.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow';
+                    gatePassCard.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-semibold text-gray-800">Gate Pass #${gatePass.id}</h4>
+                                <p class="text-sm text-gray-600">${gatePass.item} - ${gatePass.supplier || gatePass.party}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${statusBadge}
+                                <button onclick="editIncomingDetails('${gatePass.id}')" 
+                                        class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                                    ${isComplete ? 'Edit' : 'Complete'}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Truck:</span>
+                                <span class="font-medium">${gatePass.truckNumber}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Date:</span>
+                                <span class="font-medium">${gatePass.date}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Party Weight:</span>
+                                <span class="font-medium">${gatePass.partyWeight || 'N/A'} q</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Own Weight:</span>
+                                <span class="font-medium">${gatePass.ownWeight || 'N/A'} q</span>
+                            </div>
+                        </div>
+                        ${gatePass.remarks ? `<div class="mt-2 text-sm text-gray-600"><span class="font-medium">Remarks:</span> ${gatePass.remarks}</div>` : ''}
+                    `;
+                    container.appendChild(gatePassCard);
+                });
+            }
+
+            // Function to check if incoming details are complete
+            window.isIncomingDetailsComplete = function(gatePass) {
+                return gatePass && 
+                       gatePass.itemRate && 
+                       gatePass.brokerName && 
+                       gatePass.paymentDueDays;
+            };
+
+            // Function to edit incoming details
+            window.editIncomingDetails = function(gatePassId) {
+                const gatePassIndex = allGatePasses.findIndex(gp => gp.id === gatePassId);
+                if (gatePassIndex === -1) {
+                    showNotification('Gate pass not found', 'error');
+                    return;
+                }
+                
+                const gatePass = allGatePasses[gatePassIndex];
+                
+                // Populate modal fields
+                document.getElementById('incomingGatePassId').value = gatePass.id;
+                document.getElementById('incomingItem').value = gatePass.item;
+                document.getElementById('incomingPurchasedFrom').value = gatePass.supplier || gatePass.party;
+                document.getElementById('incomingTruckNumber').value = gatePass.truckNumber;
+                document.getElementById('incomingPartyWeight').value = gatePass.partyWeight || '';
+                document.getElementById('incomingOwnWeight').value = gatePass.ownWeight || '';
+                document.getElementById('incomingDate').value = gatePass.date;
+                document.getElementById('incomingItemRate').value = gatePass.itemRate || '';
+                document.getElementById('incomingBrokerName').value = gatePass.brokerName || '';
+                document.getElementById('incomingPaymentDueDays').value = gatePass.paymentDueDays || '';
+                document.getElementById('incomingRemarks').value = gatePass.remarks || '';
+                
+                // Show modal
+                document.getElementById('incomingDetailsModal').style.display = 'flex';
+            }
+
+            // Function to save incoming details
+            window.saveIncomingDetails = function() {
+                const gatePassId = document.getElementById('incomingGatePassId').value;
+                const gatePassIndex = allGatePasses.findIndex(gp => gp.id === gatePassId);
+                
+                if (gatePassIndex === -1) {
+                    showNotification('Gate pass not found', 'error');
+                    return;
+                }
+                
+                const gatePass = allGatePasses[gatePassIndex];
+                
+                // Update gate pass with new details
+                gatePass.itemRate = parseFloat(document.getElementById('incomingItemRate').value);
+                gatePass.brokerName = document.getElementById('incomingBrokerName').value;
+                gatePass.paymentDueDays = parseInt(document.getElementById('incomingPaymentDueDays').value);
+                gatePass.remarks = document.getElementById('incomingRemarks').value;
+                gatePass.lastUpdatedBy = currentUser?.email || 'Unknown';
+                gatePass.lastUpdatedAt = new Date().toISOString();
+                
+                // Calculate payment due date
+                if (gatePass.paymentDueDays && gatePass.date) {
+                    const dueDate = new Date(gatePass.date);
+                    dueDate.setDate(dueDate.getDate() + gatePass.paymentDueDays);
+                    gatePass.paymentDueDate = dueDate.toISOString().split('T')[0];
+                }
+                
+                // Update in Firebase
+                updateGatePassInFirebase(gatePass);
+                
+                // Refresh displays
+                loadIncomingGatePasses();
+                renderGatePasses(allGatePasses);
+                renderGatePassTable(allGatePasses);
+                
+                // Close modal
+                document.getElementById('incomingDetailsModal').style.display = 'none';
+                
+                showNotification('Incoming details saved successfully', 'success');
+            };
+
+
             // Outgoing Details Management Functions
             window.loadOutgoingGatePasses = function() {
                 // If no gate passes loaded, try to load them first
@@ -3498,7 +3851,7 @@
                 const outgoingPasses = allGatePasses.filter(gp => gp.type === 'Outgoing');
                 const container = document.getElementById('outgoingGatePassList');
                 const filter = document.getElementById('outgoingFilter').value;
-                const filterStatus = document.getElementById('filterStatus');
+                const filterStatus = document.getElementById('outgoingFilterStatus');
                 
                 console.log('🔍 Loading outgoing gate passes:', {
                     totalGatePasses: allGatePasses.length,
@@ -3630,15 +3983,34 @@
                 try {
                     if (gatePass.firebaseId && db) {
                         const gatePassRef = doc(db, 'gate_passes', gatePass.firebaseId);
-                        await updateDoc(gatePassRef, {
-                            itemRate: gatePass.itemRate,
-                            brokerName: gatePass.brokerName,
-                            outgoingPartyWeight: gatePass.outgoingPartyWeight,
-                            paymentDueDays: gatePass.paymentDueDays,
-                            paymentDueDate: gatePass.paymentDueDate,
+                        
+                        // Build update object with only defined values
+                        const updateData = {
                             lastUpdatedBy: gatePass.lastUpdatedBy,
                             lastUpdatedAt: gatePass.lastUpdatedAt
-                        });
+                        };
+                        
+                        // Only add fields that have valid values
+                        if (gatePass.itemRate !== undefined && gatePass.itemRate !== null) {
+                            updateData.itemRate = gatePass.itemRate;
+                        }
+                        if (gatePass.brokerName !== undefined && gatePass.brokerName !== null) {
+                            updateData.brokerName = gatePass.brokerName;
+                        }
+                        if (gatePass.outgoingPartyWeight !== undefined && gatePass.outgoingPartyWeight !== null) {
+                            updateData.outgoingPartyWeight = gatePass.outgoingPartyWeight;
+                        }
+                        if (gatePass.paymentDueDays !== undefined && gatePass.paymentDueDays !== null) {
+                            updateData.paymentDueDays = gatePass.paymentDueDays;
+                        }
+                        if (gatePass.paymentDueDate !== undefined && gatePass.paymentDueDate !== null) {
+                            updateData.paymentDueDate = gatePass.paymentDueDate;
+                        }
+                        if (gatePass.remarks !== undefined && gatePass.remarks !== null) {
+                            updateData.remarks = gatePass.remarks;
+                        }
+                        
+                        await updateDoc(gatePassRef, updateData);
                         console.log('✅ Gate pass updated in Firebase');
                     }
                 } catch (error) {
@@ -3706,10 +4078,18 @@
                 }
             };
 
+            // Event listeners for reports tab switching
+            document.getElementById('outgoingReportsTab').addEventListener('click', () => {
+                switchReportsTab('outgoing');
+            });
+            document.getElementById('incomingReportsTab').addEventListener('click', () => {
+                switchReportsTab('incoming');
+            });
+
             // Event listeners for outgoing details
             document.getElementById('outgoingFilter').addEventListener('change', loadOutgoingGatePasses);
-            document.getElementById('refreshReportsBtn').addEventListener('click', () => {
-                console.log('🔄 Manual refresh triggered');
+            document.getElementById('refreshOutgoingReportsBtn').addEventListener('click', () => {
+                console.log('🔄 Manual refresh triggered for outgoing');
                 loadOutgoingGatePasses();
             });
             
@@ -3719,6 +4099,21 @@
             });
             document.getElementById('cancelOutgoingDetails').addEventListener('click', function() {
                 document.getElementById('outgoingDetailsModal').style.display = 'none';
+            });
+
+            // Event listeners for incoming details
+            document.getElementById('incomingFilter').addEventListener('change', loadIncomingGatePasses);
+            document.getElementById('refreshIncomingReportsBtn').addEventListener('click', () => {
+                console.log('🔄 Manual refresh triggered for incoming');
+                loadIncomingGatePasses();
+            });
+            
+            document.getElementById('incomingDetailsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                window.saveIncomingDetails();
+            });
+            document.getElementById('cancelIncomingDetails').addEventListener('click', function() {
+                document.getElementById('incomingDetailsModal').style.display = 'none';
             });
 
             // Enhanced Payment Management Functions
