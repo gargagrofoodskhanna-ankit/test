@@ -339,8 +339,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Own Weight</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="gatePassTableBody" class="bg-white divide-y divide-gray-200">
@@ -1995,10 +1994,10 @@
                                 '<span class="text-gray-400">-</span>'}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${userDisplay}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${createdDate}
+                        <button onclick="editGatePassFromTable('${gatePass.id}')" 
+                                class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors">
+                            Edit
+                        </button>
                     </td>
                 `;
                 
@@ -2608,6 +2607,17 @@
             try {
                 console.log("🔄 Updating gate pass in cloud storage...");
                 
+                // Find the gate pass to get its firebaseId
+                // The docId in the input field should be the firebaseId
+                const gatePass = allGatePasses.find(gp => gp.firebaseId === docId || gp.id === docId);
+                if (!gatePass) {
+                    showNotification("❌ Gate pass not found", 'error');
+                    return;
+                }
+                
+                // Use the firebaseId for the update
+                const firebaseId = gatePass.firebaseId || docId;
+                
                 // Check if the supplier is new and add it to the database
                 const supplierExists = allSuppliers.some(s => s === purchasedFrom);
                 if (!supplierExists) {
@@ -2621,8 +2631,8 @@
                     allSuppliers.push(purchasedFrom);
                 }
 
-                // Update gate pass in Firebase
-                const gatePassRef = doc(db, 'gate_passes', docId);
+                // Update gate pass in Firebase using firebaseId
+                const gatePassRef = doc(db, 'gate_passes', firebaseId);
                 await updateDoc(gatePassRef, {
                     type,
                     item,
@@ -2638,7 +2648,23 @@
                 
                 console.log("✅ Gate pass updated in cloud:", docId);
                 hideEditModal();
-                editSupplierDropdownList.classList.add('hidden');
+                if (editSupplierDropdownList) {
+                    editSupplierDropdownList.classList.add('hidden');
+                }
+                
+                // Refresh reports if we're in reports view
+                const reportsView = document.getElementById('reportsView');
+                if (reportsView && !reportsView.classList.contains('hidden')) {
+                    // Check which tab is active and refresh accordingly
+                    const outgoingContent = document.getElementById('outgoingReportsContent');
+                    const incomingContent = document.getElementById('incomingReportsContent');
+                    
+                    if (outgoingContent && !outgoingContent.classList.contains('hidden')) {
+                        loadOutgoingGatePasses();
+                    } else if (incomingContent && !incomingContent.classList.contains('hidden')) {
+                        loadIncomingGatePasses();
+                    }
+                }
                 
                 showNotification("✅ Gate pass updated successfully!", 'success');
                 
@@ -3761,6 +3787,43 @@
                        gatePass.itemRate && 
                        gatePass.brokerName && 
                        gatePass.paymentDueDays;
+            };
+
+            // Function to edit gate pass from table
+            window.editGatePassFromTable = function(gatePassId) {
+                const gatePassIndex = allGatePasses.findIndex(gp => gp.id === gatePassId);
+                if (gatePassIndex === -1) {
+                    showNotification('Gate pass not found', 'error');
+                    return;
+                }
+                
+                const gatePass = allGatePasses[gatePassIndex];
+                
+                // Populate edit modal with current values
+                document.getElementById('editGatePassId').value = gatePass.firebaseId || gatePass.id;
+                document.getElementById('editGatepassTypeSelect').value = gatePass.type;
+                document.getElementById('editItemSelect').value = gatePass.item;
+                document.getElementById('editTruckNumber').value = gatePass.truckNumber;
+                document.getElementById('editDate').value = gatePass.date;
+                document.getElementById('editPartyWeight').value = gatePass.partyWeight || '';
+                document.getElementById('editOwnWeight').value = gatePass.ownWeight || '';
+                document.getElementById('editRemarks').value = gatePass.remarks || '';
+                
+                // Populate supplier dropdown
+                const supplierSelect = document.getElementById('editSupplierSelect');
+                supplierSelect.innerHTML = '<option value="">Select a party...</option>';
+                allParties.forEach(party => {
+                    const option = document.createElement('option');
+                    option.value = party.name;
+                    option.textContent = party.name;
+                    if (party.name === (gatePass.supplier || gatePass.party || gatePass.purchasedFrom)) {
+                        option.selected = true;
+                    }
+                    supplierSelect.appendChild(option);
+                });
+                
+                // Show edit modal
+                document.getElementById('editModal').style.display = 'flex';
             };
 
             // Function to edit incoming details
