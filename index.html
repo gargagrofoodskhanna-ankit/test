@@ -2010,7 +2010,9 @@
                         ${gatePass.date}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${gatePass.type === 'Incoming' ? `${gatePass.partyWeight} quintal` : '-'}
+                        ${gatePass.type === 'Incoming' ? 
+                            `${gatePass.partyWeight} quintal` : 
+                            (gatePass.outgoingPartyWeight ? `${gatePass.outgoingPartyWeight} quintal` : '-')}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ${gatePass.ownWeight} quintal
@@ -4026,7 +4028,8 @@
                                     ${statusBadge}
                                 </div>
                                 <p class="text-sm text-gray-600">Truck: ${gatePass.truckNumber} | Date: ${gatePass.date}</p>
-                                <p class="text-sm text-gray-600">Weight: ${gatePass.ownWeight} quintal</p>
+                                <p class="text-sm text-gray-600">Own Weight: ${gatePass.ownWeight} quintal</p>
+                                ${gatePass.outgoingPartyWeight ? `<p class="text-sm text-gray-600">Party Weight: ${gatePass.outgoingPartyWeight} quintal</p>` : ''}
                                 ${hasDetails ? `
                                     <div class="mt-2 text-xs text-gray-500">
                                         Rate: ₹${gatePass.itemRate}/quintal | Broker: ${gatePass.brokerName} | Due: ${gatePass.paymentDueDays} days (${gatePass.paymentDueDate || 'Calculating...'})
@@ -4049,13 +4052,14 @@
                 return gatePass && 
                        gatePass.itemRate && 
                        gatePass.brokerName && 
-                       gatePass.paymentDueDays;
+                       gatePass.paymentDueDays &&
+                       (gatePass.outgoingPartyWeight !== null && gatePass.outgoingPartyWeight !== undefined && gatePass.outgoingPartyWeight > 0);
             }
 
             // Make editOutgoingDetails globally accessible
             window.editOutgoingDetails = function(gatePassId) {
-                // Access allGatePasses from the global scope
-                const gatePass = window.allGatePasses ? window.allGatePasses.find(gp => gp.id === gatePassId) : null;
+                // Access allGatePasses from the local scope
+                const gatePass = allGatePasses.find(gp => gp.id === gatePassId);
                 if (!gatePass) {
                     console.error('Gate pass not found:', gatePassId);
                     return;
@@ -4126,7 +4130,7 @@
             }
 
             // Make saveOutgoingDetails globally accessible
-            window.saveOutgoingDetails = function() {
+            window.saveOutgoingDetails = async function() {
                 console.log('saveOutgoingDetails called');
                 const gatePassId = document.getElementById('outgoingGatePassId').value;
                 const itemRate = parseFloat(document.getElementById('outgoingItemRate').value);
@@ -4171,9 +4175,9 @@
                     allGatePasses[gatePassIndex].lastUpdatedAt = new Date().toISOString();
                     
                     // Update in Firebase
-                    updateGatePassInFirebase(allGatePasses[gatePassIndex]);
+                    await updateGatePassInFirebase(allGatePasses[gatePassIndex]);
                     
-                    // Refresh displays
+                    // Refresh displays immediately after local update
                     loadOutgoingGatePasses();
                     renderGatePasses(allGatePasses);
                     renderGatePassTable(allGatePasses);
