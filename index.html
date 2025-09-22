@@ -80,6 +80,42 @@
         .shadow-custom {
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05), 0 6px 6px rgba(0, 0, 0, 0.1);
         }
+        
+        /* Consistent width for all main sections */
+        #mainView, #reportsView, #adminView {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            min-height: 400px; /* Prevent height jumping too */
+        }
+
+        /* Ensure tables don't cause width issues */
+        .overflow-x-auto {
+            max-width: 100%;
+        }
+
+        /* Consistent table minimum width */
+        .min-w-full {
+            min-width: 800px;
+        }
+
+        /* Fix admin tab content width consistency */
+        .admin-tab-content {
+            max-width: 1200px !important;
+            margin: 0 auto;
+            width: 100%;
+            min-height: 400px;
+        }
+
+        /* Ensure admin tables are properly constrained */
+        .admin-tab-content .overflow-x-auto {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .admin-tab-content .min-w-full {
+            min-width: 1000px; /* Allow table to be wider than container */
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -2593,7 +2629,17 @@
             const purchasedFrom = editSupplierSelect.value;
             const truckNumber = editTruckNumberInput.value;
             const date = editDateInput.value;
-            const partyWeight = type === 'Outgoing' ? null : parseFloat(editPartyWeightInput.value);
+            
+            // Find the gate pass to get its data first
+            const gatePass = allGatePasses.find(gp => gp.firebaseId === docId || gp.id === docId);
+            if (!gatePass) {
+                showNotification("❌ Gate pass not found", 'error');
+                return;
+            }
+            
+            const partyWeight = type === 'Outgoing' ? 
+                (gatePass.outgoingPartyWeight || null) : 
+                parseFloat(editPartyWeightInput.value);
             const ownWeight = parseFloat(editOwnWeightInput.value);
             const remarks = editRemarks.value.trim();
 
@@ -2606,14 +2652,6 @@
 
             try {
                 console.log("🔄 Updating gate pass in cloud storage...");
-                
-                // Find the gate pass to get its firebaseId
-                // The docId in the input field should be the firebaseId
-                const gatePass = allGatePasses.find(gp => gp.firebaseId === docId || gp.id === docId);
-                if (!gatePass) {
-                    showNotification("❌ Gate pass not found", 'error');
-                    return;
-                }
                 
                 // Use the firebaseId for the update
                 const firebaseId = gatePass.firebaseId || docId;
@@ -2633,18 +2671,24 @@
 
                 // Update gate pass in Firebase using firebaseId
                 const gatePassRef = doc(db, 'gate_passes', firebaseId);
-                await updateDoc(gatePassRef, {
+                const updateData = {
                     type,
                     item,
                     purchasedFrom,
                     truckNumber,
                     date,
-                    partyWeight,
                     ownWeight,
                     remarks: remarks || '',
                     updatedAt: new Date().toISOString(),
                     updatedBy: userId || 'anonymous'
-                });
+                };
+
+                // Only update partyWeight for incoming gate passes
+                if (type === 'Incoming') {
+                    updateData.partyWeight = partyWeight;
+                }
+
+                await updateDoc(gatePassRef, updateData);
                 
                 console.log("✅ Gate pass updated in cloud:", docId);
                 hideEditModal();
@@ -3805,7 +3849,7 @@
                 document.getElementById('editItemSelect').value = gatePass.item;
                 document.getElementById('editTruckNumber').value = gatePass.truckNumber;
                 document.getElementById('editDate').value = gatePass.date;
-                document.getElementById('editPartyWeight').value = gatePass.partyWeight || '';
+                document.getElementById('editPartyWeight').value = gatePass.partyWeight || gatePass.outgoingPartyWeight || '';
                 document.getElementById('editOwnWeight').value = gatePass.ownWeight || '';
                 document.getElementById('editRemarks').value = gatePass.remarks || '';
                 
