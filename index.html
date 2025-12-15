@@ -2452,37 +2452,60 @@
 
             try {
                 console.log("🔄 Loading items from Firebase...");
+                
+                if (!db) {
+                    throw new Error("Firebase database not initialized");
+                }
+                
                 const itemsRef = collection(db, 'items');
                 
                 // Set up real-time listener
                 onSnapshot(itemsRef, (snapshot) => {
-                    allItems = [];
-                    snapshot.forEach((doc) => {
-                        allItems.push({
-                            id: doc.id,
-                            ...doc.data()
+                    try {
+                        allItems = [];
+                        snapshot.forEach((doc) => {
+                            if (doc.exists()) {
+                                const data = doc.data();
+                                allItems.push({
+                                    id: doc.id,
+                                    name: data.name || '',
+                                    unit: data.unit || 'qtl',
+                                    description: data.description || '',
+                                    ...data
+                                });
+                            }
                         });
-                    });
-                    
-                    console.log("✅ Items loaded from Firebase:", allItems.length);
-                    
-                    // Populate dropdowns
-                    populateItemDropdowns();
-                    
-                    // Render item list in admin view
-                    renderItemList();
-                    
-                    // Update inventory calculation
-                    if (allGatePasses.length > 0) {
-                        calculateAndRenderInventory(allGatePasses);
+                        
+                        console.log("✅ Items loaded from Firebase:", allItems.length);
+                        
+                        // Populate dropdowns
+                        populateItemDropdowns();
+                        
+                        // Render item list in admin view
+                        renderItemList();
+                        
+                        // Update inventory calculation
+                        if (allGatePasses && allGatePasses.length > 0) {
+                            calculateAndRenderInventory(allGatePasses);
+                        }
+                    } catch (snapshotError) {
+                        console.error("❌ Error processing items snapshot:", snapshotError);
+                        // Fallback to default items
+                        allItems = [
+                            { id: 'default-maize', name: 'Maize', unit: 'qtl', description: '', createdAt: new Date().toISOString() },
+                            { id: 'default-wheat', name: 'Wheat', unit: 'qtl', description: '', createdAt: new Date().toISOString() },
+                            { id: 'default-rice', name: 'Rice', unit: 'qtl', description: '', createdAt: new Date().toISOString() }
+                        ];
+                        populateItemDropdowns();
+                        renderItemList();
                     }
                 }, (error) => {
                     console.error("❌ Error loading items:", error);
                     // Fallback to default items
                     allItems = [
-                        { id: 'default-maize', name: 'Maize', description: '', createdAt: new Date().toISOString() },
-                        { id: 'default-wheat', name: 'Wheat', description: '', createdAt: new Date().toISOString() },
-                        { id: 'default-rice', name: 'Rice', description: '', createdAt: new Date().toISOString() }
+                        { id: 'default-maize', name: 'Maize', unit: 'qtl', description: '', createdAt: new Date().toISOString() },
+                        { id: 'default-wheat', name: 'Wheat', unit: 'qtl', description: '', createdAt: new Date().toISOString() },
+                        { id: 'default-rice', name: 'Rice', unit: 'qtl', description: '', createdAt: new Date().toISOString() }
                     ];
                     populateItemDropdowns();
                     renderItemList();
@@ -2491,9 +2514,9 @@
                 console.error("❌ Error setting up items listener:", error);
                 // Fallback to default items
                 allItems = [
-                    { id: 'default-maize', name: 'Maize', description: '', createdAt: new Date().toISOString() },
-                    { id: 'default-wheat', name: 'Wheat', description: '', createdAt: new Date().toISOString() },
-                    { id: 'default-rice', name: 'Rice', description: '', createdAt: new Date().toISOString() }
+                    { id: 'default-maize', name: 'Maize', unit: 'qtl', description: '', createdAt: new Date().toISOString() },
+                    { id: 'default-wheat', name: 'Wheat', unit: 'qtl', description: '', createdAt: new Date().toISOString() },
+                    { id: 'default-rice', name: 'Rice', unit: 'qtl', description: '', createdAt: new Date().toISOString() }
                 ];
                 populateItemDropdowns();
                 renderItemList();
@@ -2717,54 +2740,82 @@
 
         // Render item list in admin view
         function renderItemList() {
-            const itemList = document.getElementById('itemList');
-            if (!itemList) return;
-            
-            console.log("🔄 Rendering item list, allItems count:", allItems.length);
-            itemList.innerHTML = '';
-            
-            if (allItems.length === 0) {
-                itemList.innerHTML = '<p class="text-gray-500 text-center">No items found</p>';
-                return;
-            }
-            
-            // Sort items by name
-            const sortedItems = [...allItems].sort((a, b) => a.name.localeCompare(b.name));
-            
-            sortedItems.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg border mb-2';
-                // Get unit display name
-                const unitNames = {
-                    'kg': 'Kilogram (kg)',
-                    'qtl': 'Quintal (qtl)',
-                    'ton': 'Ton (ton)',
-                    'meter': 'Meter (m)',
-                    'liter': 'Liter (L)',
-                    'piece': 'Piece',
-                    'bag': 'Bag',
-                    'sack': 'Sack'
-                };
-                const unitDisplay = unitNames[item.unit] || item.unit || 'Quintal (qtl)';
+            try {
+                const itemList = document.getElementById('itemList');
+                if (!itemList) {
+                    console.warn("⚠️ Item list element not found");
+                    return;
+                }
                 
-                itemElement.innerHTML = `
-                    <div class="flex-1">
-                        <div class="font-medium text-gray-900">${item.name} <span class="text-sm font-normal text-gray-500">(${unitDisplay})</span></div>
-                        ${item.description ? `<div class="text-sm text-gray-600">${item.description}</div>` : ''}
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="editItem('${item.id}')" 
-                                class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
-                            Edit
-                        </button>
-                        <button onclick="deleteItem('${item.id}')" 
-                                class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
-                            Delete
-                        </button>
-                    </div>
-                `;
-                itemList.appendChild(itemElement);
-            });
+                console.log("🔄 Rendering item list, allItems count:", allItems.length);
+                itemList.innerHTML = '';
+                
+                if (!allItems || allItems.length === 0) {
+                    itemList.innerHTML = '<p class="text-gray-500 text-center py-4">No items found. Add your first item above.</p>';
+                    return;
+                }
+                
+                // Sort items by name
+                const sortedItems = [...allItems].sort((a, b) => {
+                    if (!a.name || !b.name) return 0;
+                    return a.name.localeCompare(b.name);
+                });
+                
+                sortedItems.forEach(item => {
+                    try {
+                        if (!item || !item.name) {
+                            console.warn("⚠️ Skipping invalid item:", item);
+                            return;
+                        }
+                        
+                        const itemElement = document.createElement('div');
+                        itemElement.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg border mb-2';
+                        // Get unit display name
+                        const unitNames = {
+                            'kg': 'Kilogram (kg)',
+                            'qtl': 'Quintal (qtl)',
+                            'ton': 'Ton (ton)',
+                            'meter': 'Meter (m)',
+                            'liter': 'Liter (L)',
+                            'piece': 'Piece',
+                            'bag': 'Bag',
+                            'sack': 'Sack'
+                        };
+                        const unitDisplay = item.unit ? (unitNames[item.unit] || item.unit) : 'Quintal (qtl)';
+                        
+                        // Escape HTML to prevent XSS
+                        const itemName = item.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const itemDesc = item.description ? item.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+                        const itemId = item.id ? item.id.replace(/'/g, "\\'") : '';
+                        
+                        itemElement.innerHTML = `
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">${itemName} <span class="text-sm font-normal text-gray-500">(${unitDisplay})</span></div>
+                                ${itemDesc ? `<div class="text-sm text-gray-600">${itemDesc}</div>` : ''}
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editItem('${itemId}')" 
+                                        class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                                    Edit
+                                </button>
+                                <button onclick="deleteItem('${itemId}')" 
+                                        class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
+                                    Delete
+                                </button>
+                            </div>
+                        `;
+                        itemList.appendChild(itemElement);
+                    } catch (itemError) {
+                        console.error("❌ Error rendering item:", item, itemError);
+                    }
+                });
+            } catch (error) {
+                console.error("❌ Error in renderItemList:", error);
+                const itemList = document.getElementById('itemList');
+                if (itemList) {
+                    itemList.innerHTML = '<p class="text-red-500 text-center py-4">Error loading items. Please refresh the page.</p>';
+                }
+            }
         }
 
         // Clear item form fields
